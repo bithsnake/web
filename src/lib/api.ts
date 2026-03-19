@@ -18,7 +18,7 @@ export const api = {
     return (await response.json()) as T;
   },
 
-  post: async function <T, K>(resource: string, data: K): Promise<Response> {
+  post: async function <T, K>(resource: string, data: K): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${resource}`, {
       method: "POST",
       headers: {
@@ -32,6 +32,6 @@ export const api = {
       throw new Error(`API POST request failed: ${response.status} ${response.statusText}. Response body: ${body}`);
     }
 
-    return await response;
+    return (await response.json()) as T;
   },
 };

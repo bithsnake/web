@@ -19,14 +19,8 @@ export function CreatePatientForm({ onSuccess, onError }: CreatePartientFormProp
     setIsSubmitting(true);
 
     try {
-      const response = await api.post<Patient, CreatePatientRequest>("/patients", { name, email });
+      const newPatient = await api.post<Patient, CreatePatientRequest>("/patients", { name, email });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const newPatient: Patient = await response.json();
       onSuccess(newPatient);
       setName("");
       setEmail("");

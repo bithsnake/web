@@ -48,8 +48,6 @@ export default function PatientsPage() {
     );
   }
 
-  const displayData = [...(data || []), ...optimisticPatients];
-
   return (
     <AppShell>
       <h1 className="text-2xl font-semibold">Patients</h1>
@@ -72,7 +70,7 @@ export default function PatientsPage() {
           </button>
         </div>
 
-        {displayData.length === 0 ? (
+        {data.length === 0 ? (
           <p className="text-sm text-(--muted)">No patients found.</p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-(--line)">
@@ -85,8 +83,8 @@ export default function PatientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {displayData.map((p, index) => (
-                  <tr key={index} className="border-t border-(--line) hover:bg-(--line)">
+                {data.map((p) => (
+                  <tr key={p.id} className="border-t border-(--line) hover:bg-(--line)">
                     <td className="px-3 py-2 text-xs text-(--muted)">{p.id}</td>
                     <td className="px-3 py-2">{p.name}</td>
                     <td className="px-3 py-2">{p.email}</td>

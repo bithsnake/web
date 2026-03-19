@@ -1,20 +1,26 @@
 "use client";
 
-import { API_BASE_URL } from "@/lib/api";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { clearSearch, setSearch } from "@/lib/features/patients-ui-slice";
 import { AppShell } from "../_components/app-shell";
 import { Patient } from "../../lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CreatePatientForm } from "../_components/create-patient-form";
+import { getAllPatients, getPatientById } from "./patients-api.service";
 
 export default function PatientsPage() {
   const [formError, setFormError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+
+  const search = useAppSelector((state) => state.patientsUi.search); // subscribe to value
+
   const queryClient = useQueryClient();
 
   const { data, isPending, error, refetch } = useQuery<Patient[]>({
     queryKey: ["patients"],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/patients`);
+      const response = await getAllPatients();
       if (!response.ok) {
         throw new Error(`Failed to fetch patients: ${response.status}`);
       }
@@ -22,18 +28,60 @@ export default function PatientsPage() {
     },
   });
 
+  const filteredPatients = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return data || [];
+    if (!data) return [];
+
+    return data.filter((patient) => {
+      return (
+        patient.name.toLowerCase().includes(query) ||
+        patient.email.toLowerCase().includes(query) ||
+        String(patient.id).includes(query)
+      );
+    });
+  }, [data, search]);
+
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`${API_BASE_URL}/patients/${id}`, {
-        method: "DELETE",
-      });
+    mutationFn: async (patientId: number) => {
+      setFormError(null);
+
+      const response = await getPatientById(patientId);
 
       if (!response.ok) {
-        throw new Error("Failed to delete patient");
+        const responseBody = await response.text().catch(() => "");
+        let backendMessage = "";
+
+        if (responseBody) {
+          try {
+            const parsedBody = JSON.parse(responseBody) as {
+              message?: string | string[];
+            };
+
+            if (Array.isArray(parsedBody.message)) {
+              backendMessage = parsedBody.message.join(", ");
+            } else if (typeof parsedBody.message === "string") {
+              backendMessage = parsedBody.message;
+            }
+          } catch {
+            backendMessage = responseBody;
+          }
+        }
+
+        const fallbackMessage =
+          response.status === 409
+            ? "Cannot delete patient because they have related appointments."
+            : `Failed to delete patient (${response.status})`;
+
+        throw new Error(backendMessage || fallbackMessage);
       }
     },
     onSuccess: () => {
+      setFormError(null);
       void queryClient.invalidateQueries({ queryKey: ["patients"] });
+    },
+    onError: (mutationError) => {
+      setFormError(mutationError.message);
     },
   });
 
@@ -46,6 +94,16 @@ export default function PatientsPage() {
   const handleCreateError = (error: Error) => {
     setFormError(error.message);
   };
+
+  function handleDeleteClick(patientId: number) {
+    const confirmed = window.confirm("Delete this patient? This action cannot be undone.");
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteMutation.mutate(patientId);
+  }
 
   if (isPending) {
     return (
@@ -62,13 +120,12 @@ export default function PatientsPage() {
       <AppShell>
         <h1 className="text-2xl font-semibold">Patients</h1>
         <p className="mt-2 text-sm text-(--muted)">
-          An error occurred while fetching patients: {error instanceof Error ? error.message : "Unknown error"}
+          An error occurred while fetching patients:{" "}
+          {error instanceof Error ? error.message : "Unknown error"}
         </p>
       </AppShell>
     );
   }
-
-  const patients = data ?? [];
 
   return (
     <AppShell>
@@ -82,15 +139,29 @@ export default function PatientsPage() {
       <div className="mt-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Patients List</h2>
-          <button
-            onClick={() => void refetch()}
-            className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm hover:cursor-pointer hover:bg-(--line)"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              value={search}
+              onChange={(event) => dispatch(setSearch(event.target.value))}
+              placeholder="Search by id, name, or email"
+              className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm"
+            />
+            <button
+              onClick={() => dispatch(clearSearch())}
+              className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm hover:cursor-pointer hover:bg-(--line)"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => void refetch()}
+              className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm hover:cursor-pointer hover:bg-(--line)"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
-        {patients.length === 0 ? (
+        {filteredPatients.length === 0 ? (
           <p className="text-sm text-(--muted)">No patients found.</p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-(--line)">
@@ -104,14 +175,14 @@ export default function PatientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {patients.map((p) => (
+                {filteredPatients.map((p) => (
                   <tr key={p.id} className="border-t border-(--line) hover:bg-(--line)">
                     <td className="px-3 py-2 text-xs text-(--muted)">{p.id}</td>
                     <td className="px-3 py-2">{p.name}</td>
                     <td className="px-3 py-2">{p.email}</td>
                     <td className="px-3 py-2">
                       <button
-                        onClick={() => deleteMutation.mutate(p.id)}
+                        onClick={() => handleDeleteClick(p.id)}
                         disabled={deleteMutation.isPending}
                         className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
                       >

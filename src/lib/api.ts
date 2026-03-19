@@ -17,4 +17,21 @@ export const api = {
 
     return (await response.json()) as T;
   },
+
+  post: async function <T, K>(resource: string, data: K): Promise<Response> {
+    const response = await fetch(`${API_BASE_URL}${resource}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "No response body");
+      throw new Error(`API POST request failed: ${response.status} ${response.statusText}. Response body: ${body}`);
+    }
+
+    return await response;
+  },
 };

@@ -2,6 +2,14 @@ import { Appointment, CreateAppointmentRequest } from "@/lib/types";
 import { API_BASE_URL } from "../api";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+type DoctorOption = {
+  id: number;
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email: string;
+};
+
 const appointmentsListTag = { type: "Appointments" as const, id: "LIST" };
 export const appointmentsApi = createApi({
   reducerPath: "appointmentsApi",
@@ -25,6 +33,9 @@ export const appointmentsApi = createApi({
       query: (id) => `/appointments/${id}`,
       providesTags: (result, error, id) => [{ type: "Appointments", id }],
       keepUnusedDataFor: 5,
+    }),
+    getDoctors: builder.query<DoctorOption[], void>({
+      query: () => "/users/role/DENTIST",
     }),
     createAppointment: builder.mutation<Appointment, CreateAppointmentRequest>({
       query: (newAppointment) => ({
@@ -50,6 +61,7 @@ export const appointmentsApi = createApi({
 export const {
   useGetAppointmentsQuery,
   useGetAppointmentByIdQuery,
+  useGetDoctorsQuery,
   useCreateAppointmentMutation,
   useSoftDeleteAppointmentMutation,
 } = appointmentsApi;

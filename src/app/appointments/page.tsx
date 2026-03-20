@@ -67,6 +67,17 @@ export default function AppointmentsPage() {
     });
   }, [data, search]);
 
+  const totalAppointments = data?.length ?? 0;
+  const scheduledCount = (data ?? []).filter(
+    (appointment) => String(appointment.status).toUpperCase() === "SCHEDULED",
+  ).length;
+  const completedCount = (data ?? []).filter(
+    (appointment) => String(appointment.status).toUpperCase() === "COMPLETED",
+  ).length;
+  const canceledCount = (data ?? []).filter(
+    (appointment) => String(appointment.status).toUpperCase() === "CANCELED",
+  ).length;
+
   const handleCreateSuccess = (newAppointment: Appointment) => {
     void newAppointment;
     void refetch();
@@ -130,106 +141,160 @@ export default function AppointmentsPage() {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold">Appointments</h1>
+      <section className="relative overflow-hidden rounded-2xl border border-(--line) bg-linear-to-br from-(--panel) via-(--panel) to-(--bg) p-5 md:p-7">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-(--brand)/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-(--brand)/10 blur-2xl" />
 
-      <div className="mt-6">
-        <CreateAppointmentForm
-          onSuccess={handleCreateSuccess}
-          onError={handleCreateError}
-        />
-        {formError && (
-          <p className="mt-2 text-sm text-(--warn)">Error: {formError}</p>
-        )}
-      </div>
+        <div className="relative">
+          <p className="text-xs uppercase tracking-[0.2em] text-(--muted)">
+            Clinic Operations
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold leading-tight md:text-4xl">
+            Appointments
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-(--muted)">
+            Manage scheduling, check live status distribution, and inspect
+            details quickly from one surface.
+          </p>
 
-      <div className="mt-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Appointments List</h2>
-          <div className="flex items-center gap-2">
-            <input
-              value={search}
-              onChange={(event) => dispatch(setSearch(event.target.value))}
-              placeholder="Search by id, name, or email"
-              className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm"
-            />
-            <button
-              onClick={() => dispatch(clearSearch())}
-              className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm hover:cursor-pointer hover:bg-(--line)"
-            >
-              Clear
-            </button>
-            <button
-              onClick={() => void refetch()}
-              className="rounded-lg border border-(--line) bg-white px-3 py-2 text-sm hover:cursor-pointer hover:bg-(--line)"
-            >
-              Refresh
-            </button>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-wide text-(--muted)">
+                Total
+              </p>
+              <p className="mt-1 text-xl font-semibold">{totalAppointments}</p>
+            </div>
+            <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-wide text-(--muted)">
+                Scheduled
+              </p>
+              <p className="mt-1 text-xl font-semibold">{scheduledCount}</p>
+            </div>
+            <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-wide text-(--muted)">
+                Completed
+              </p>
+              <p className="mt-1 text-xl font-semibold">{completedCount}</p>
+            </div>
+            <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-wide text-(--muted)">
+                Canceled
+              </p>
+              <p className="mt-1 text-xl font-semibold">{canceledCount}</p>
+            </div>
           </div>
         </div>
+      </section>
 
-        {filteredAppointments.length === 0 ? (
-          <p className="text-sm text-(--muted)">No appointments found.</p>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-(--line)">
-            {selectedAppointmentId ? (
-              <div className="p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-semibold">
-                    Appointment Details
-                  </h3>
-                  <button
-                    onClick={() => dispatch(clearSelectedAppointmentId())}
-                    className="rounded-lg border border-(--line) bg-white px-3 py-1 text-sm hover:bg-(--line)"
-                  >
-                    Back to list
-                  </button>
-                </div>
+      <div className="mt-6 grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+        <section className="rounded-2xl border border-(--line) bg-(--panel) p-4 md:p-5">
+          <CreateAppointmentForm
+            onSuccess={handleCreateSuccess}
+            onError={handleCreateError}
+          />
+          {formError && (
+            <p className="mt-3 rounded-md border border-(--warn)/30 bg-(--warn)/10 px-3 py-2 text-sm text-(--warn)">
+              Error: {formError}
+            </p>
+          )}
+        </section>
 
-                {isLoadingById ? (
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="spinner "></span>
-                    <p className="mt-2 text-sm text-(--muted)">
-                      Loading appointment data...
-                    </p>
-                  </div>
-                ) : appointmentById ? (
-                  <ObjectDetailsTable
-                    data={appointmentById}
-                    fieldTranslations={appointmentObjMap}
-                    emptyText="No data available for this appointment."
-                  />
-                ) : (
-                  <p className="mt-2 text-sm text-(--muted)">
-                    An error occurred while fetching appointment data.
-                  </p>
-                )}
+        <section className="rounded-2xl border border-(--line) bg-(--panel) p-4 md:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Appointments List</h2>
+            {!selectedAppointmentId ? (
+              <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+                <input
+                  value={search}
+                  onChange={(event) => dispatch(setSearch(event.target.value))}
+                  placeholder="Search by id or name"
+                  className="min-w-55 flex-1 rounded-xl border border-(--line) bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
+                />
+                <button
+                  onClick={() => dispatch(clearSearch())}
+                  className="rounded-xl border border-(--line) bg-white px-3 py-2 text-sm shadow-sm transition hover:cursor-pointer hover:bg-(--line)"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => void refetch()}
+                  className="rounded-xl border border-transparent bg-(--brand) px-3 py-2 text-sm text-white shadow-sm transition hover:cursor-pointer hover:bg-(--brand-strong)"
+                >
+                  Refresh
+                </button>
               </div>
-            ) : (
-              <ObjectsTable
-                data={filteredAppointments}
-                fieldTranslations={{
-                  id: "ID",
-                  name: "Name",
-                  email: "Email",
-                  createdAt: "Created At",
-                  updatedAt: "Updated At",
-                }}
-                onRowClick={(appointment) =>
-                  dispatch(setSelectedAppointmentId(appointment.id))
-                }
-                onAction={(appointment) =>
-                  void handleSoftDeleteClick(appointment.id)
-                }
-                actionLabel={(appointment) =>
-                  isRowSoftDeleting(appointment.id) ? "Deleting..." : "Delete"
-                }
-                isActionDisabled={(appointment) =>
-                  isRowSoftDeleting(appointment.id)
-                }
-              />
-            )}
+            ) : null}
           </div>
-        )}
+
+          {filteredAppointments.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-(--line) bg-white/60 p-6 text-center text-sm text-(--muted)">
+              No appointments found.
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-(--line) bg-white">
+              {selectedAppointmentId ? (
+                <div className="p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-base font-semibold">
+                      Appointment Details
+                    </h3>
+                    <button
+                      onClick={() => dispatch(clearSelectedAppointmentId())}
+                      className="rounded-xl border border-(--line) bg-white px-3 py-1 text-sm transition hover:bg-(--line)"
+                    >
+                      Back to list
+                    </button>
+                  </div>
+
+                  {isLoadingById ? (
+                    <div className="flex flex-col items-center justify-center py-6">
+                      <span className="spinner "></span>
+                      <p className="mt-2 text-sm text-(--muted)">
+                        Loading appointment data...
+                      </p>
+                    </div>
+                  ) : appointmentById ? (
+                    <ObjectDetailsTable
+                      data={appointmentById}
+                      fieldTranslations={appointmentObjMap}
+                      emptyText="No data available for this appointment."
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-(--muted)">
+                      An error occurred while fetching appointment data.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <ObjectsTable
+                  data={filteredAppointments}
+                  fieldTranslations={{
+                    id: "ID",
+                    name: "Name",
+                    status: "Status",
+                    patientId: "Patient ID",
+                    userId: "Doctor ID",
+                    date: "Date",
+                    createdAt: "Created At",
+                    updatedAt: "Updated At",
+                  }}
+                  onRowClick={(appointment) =>
+                    dispatch(setSelectedAppointmentId(appointment.id))
+                  }
+                  onAction={(appointment) =>
+                    void handleSoftDeleteClick(appointment.id)
+                  }
+                  actionLabel={(appointment) =>
+                    isRowSoftDeleting(appointment.id) ? "Deleting..." : "Delete"
+                  }
+                  isActionDisabled={(appointment) =>
+                    isRowSoftDeleting(appointment.id)
+                  }
+                />
+              )}
+            </div>
+          )}
+        </section>
       </div>
     </AppShell>
   );

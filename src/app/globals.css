@@ -35,6 +35,24 @@ a {
   text-decoration: none;
 }
 
+button:hover {
+  cursor: pointer;
+}
+
+button:disabled:hover {
+  cursor: not-allowed;
+}
+
+select:hover,
+option:hover {
+  cursor: pointer;
+}
+
+select:disabled:hover,
+option:disabled:hover {
+  cursor: not-allowed;
+}
+
 .spinner {
   display: inline-block;
   width: 16px;

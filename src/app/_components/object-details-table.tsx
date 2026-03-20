@@ -1,6 +1,7 @@
 "use client";
 
 import { ObjectDetailsTableProps } from "@/lib/types";
+import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
 
 function formatValue(value: unknown): string {
   if (value === null || value === undefined) return "-";
@@ -31,6 +32,16 @@ function fallbackLabel(key: string): string {
     .replace(/^./, (char) => char.toUpperCase());
 }
 
+function renderDetailsValue(key: string, value: unknown): React.ReactNode {
+  if (key === "status" && typeof value === "string") {
+    return (
+      <StatusTag label={formatStatusLabel(value)} tone={getStatusTone(value)} />
+    );
+  }
+
+  return formatValue(value);
+}
+
 export function ObjectDetailsTable<T extends Record<string, unknown>>({
   data,
   fieldTranslations = {},
@@ -50,7 +61,7 @@ export function ObjectDetailsTable<T extends Record<string, unknown>>({
             <th className="w-48 bg-(--line) px-3 py-2 text-left font-semibold">
               {fieldTranslations[key] ?? fallbackLabel(key)}
             </th>
-            <td className="px-3 py-2">{formatValue(value)}</td>
+            <td className="px-3 py-2">{renderDetailsValue(key, value)}</td>
           </tr>
         ))}
       </tbody>

@@ -1,6 +1,7 @@
+"use client";
+
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { Appointment, APPOINTMENT_OBJ_MAP } from "@/lib/types";
-import { useState, useMemo } from "react";
 import { AppShell } from "../_components/app-shell";
 import {
   useGetAppointmentByIdQuery,
@@ -16,6 +17,7 @@ import {
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { ObjectsTable } from "../_components/objects-table";
 import { CreateAppointmentForm } from "../_components/create-appointment-form";
+import { useState, useMemo } from "react";
 
 export default function AppointmentsPage() {
   const appointmentObjMap: Record<string, string> = Object.entries(

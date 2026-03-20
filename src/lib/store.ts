@@ -12,7 +12,10 @@ export const store = configureStore({
     [appointmentsApi.reducerPath]: appointmentsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(patientsApi.middleware),
+    getDefaultMiddleware().concat(
+      patientsApi.middleware,
+      appointmentsApi.middleware,
+    ),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

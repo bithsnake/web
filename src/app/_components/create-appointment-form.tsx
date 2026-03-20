@@ -22,6 +22,12 @@ export function CreateAppointmentForm({
   const [patientId, setPatientId] = useState("");
   const [userId, setUserId] = useState("");
   const [date, setDate] = useState("");
+  const [dirty, setDirty] = useState({
+    name: false,
+    patientId: false,
+    userId: false,
+    date: false,
+  });
 
   const { data: patients = [], isLoading: isPatientsLoading } =
     useGetPatientsQuery();
@@ -32,6 +38,11 @@ export function CreateAppointmentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const hasMissingRequired = !name || !patientId || !userId || !date;
+    if (hasMissingRequired) {
+      return;
+    }
 
     try {
       const newAppointment = await createAppointment({
@@ -48,6 +59,12 @@ export function CreateAppointmentForm({
       setPatientId("");
       setUserId("");
       setDate("");
+      setDirty({
+        name: false,
+        patientId: false,
+        userId: false,
+        date: false,
+      });
     } catch (error) {
       if (error instanceof Error) {
         onError(error);
@@ -60,6 +77,7 @@ export function CreateAppointmentForm({
   return (
     <form
       onSubmit={handleSubmit}
+      noValidate
       className="space-y-4 rounded-2xl border border-(--line) bg-linear-to-br from-white to-(--panel) p-5"
     >
       <div>
@@ -74,12 +92,26 @@ export function CreateAppointmentForm({
         <input
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            setDirty((current) => ({ ...current, name: true }));
+          }}
+          onBlur={() => setDirty((current) => ({ ...current, name: true }))}
           required
           disabled={isLoading}
-          className="w-full rounded-xl border border-(--line) bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
+          className={[
+            "w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20",
+            dirty.name && !name
+              ? "border-(--warn) ring-1 ring-(--warn)/25"
+              : "border-(--line)",
+          ].join(" ")}
           placeholder="Teeth cleaning"
         />
+        {dirty.name && !name ? (
+          <p className="rounded-md border border-(--warn)/30 bg-(--warn)/10 px-2 py-1 text-xs text-(--warn)">
+            Enter a name to continue.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -87,6 +119,10 @@ export function CreateAppointmentForm({
           label="Patient"
           value={patientId}
           onChange={setPatientId}
+          onDirtyChange={(isDirty) =>
+            setDirty((current) => ({ ...current, patientId: isDirty }))
+          }
+          dirty={dirty.patientId}
           sortAlphabetically
           disabled={isLoading || isPatientsLoading}
           required
@@ -100,6 +136,10 @@ export function CreateAppointmentForm({
           label="Doctor"
           value={userId}
           onChange={setUserId}
+          onDirtyChange={(isDirty) =>
+            setDirty((current) => ({ ...current, userId: isDirty }))
+          }
+          dirty={dirty.userId}
           sortAlphabetically
           disabled={isLoading || isDoctorsLoading}
           required
@@ -126,11 +166,25 @@ export function CreateAppointmentForm({
         <input
           type="datetime-local"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => {
+            setDate(e.target.value);
+            setDirty((current) => ({ ...current, date: true }));
+          }}
+          onBlur={() => setDirty((current) => ({ ...current, date: true }))}
           required
           disabled={isLoading}
-          className="w-full rounded-xl border border-(--line) bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
+          className={[
+            "w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20",
+            dirty.date && !date
+              ? "border-(--warn) ring-1 ring-(--warn)/25"
+              : "border-(--line)",
+          ].join(" ")}
         />
+        {dirty.date && !date ? (
+          <p className="rounded-md border border-(--warn)/30 bg-(--warn)/10 px-2 py-1 text-xs text-(--warn)">
+            Choose a date and time to continue.
+          </p>
+        ) : null}
       </div>
 
       <button

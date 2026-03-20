@@ -1,0 +1,59 @@
+"use client";
+
+import { ObjectDetailsTableProps } from "@/lib/types";
+
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return "-";
+
+  if (value instanceof Date) {
+    return value.toLocaleString();
+  }
+
+  if (typeof value === "string") {
+    const maybeDate = new Date(value);
+    const looksLikeIsoDate =
+      !Number.isNaN(maybeDate.getTime()) && /^\d{4}-\d{2}-\d{2}T/.test(value);
+
+    return looksLikeIsoDate ? maybeDate.toLocaleString() : value;
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
+function fallbackLabel(key: string): string {
+  // camelCase -> Camel Case
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/^./, (char) => char.toUpperCase());
+}
+
+export function ObjectDetailsTable<T extends Record<string, unknown>>({
+  data,
+  fieldTranslations = {},
+  emptyText = "No details available.",
+}: ObjectDetailsTableProps<T>) {
+  if (!data) {
+    return <p className="text-sm text-(--muted)">{emptyText}</p>;
+  }
+
+  const entries = Object.entries(data);
+
+  return (
+    <table className="w-full border-collapse text-sm">
+      <tbody>
+        {entries.map(([key, value]) => (
+          <tr key={key} className="border-t border-(--line)">
+            <th className="w-48 bg-(--line) px-3 py-2 text-left font-semibold">
+              {fieldTranslations[key] ?? fallbackLabel(key)}
+            </th>
+            <td className="px-3 py-2">{formatValue(value)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}

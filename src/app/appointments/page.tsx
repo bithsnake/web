@@ -15,9 +15,9 @@ import {
   setSelectedAppointmentId,
 } from "@/lib/features/appointments-ui-slice";
 import { ObjectDetailsTable } from "../_components/object-details-table";
-import { ObjectsTable } from "../_components/objects-table";
 import { CreateAppointmentForm } from "../_components/create-appointment-form";
 import { useState, useMemo } from "react";
+import { ObjectsTable } from "../_components/objects-table";
 
 export default function AppointmentsPage() {
   const appointmentObjMap: Record<string, string> = Object.entries(
@@ -271,12 +271,12 @@ export default function AppointmentsPage() {
                   fieldTranslations={{
                     id: "ID",
                     name: "Name",
-                    status: "Status",
                     patientId: "Patient ID",
-                    userId: "Doctor ID",
-                    date: "Date",
+                    userId: "Dentist ID",
+                    date: "Appointment Date",
                     createdAt: "Created At",
                     updatedAt: "Updated At",
+                    status: "Status",
                   }}
                   onRowClick={(appointment) =>
                     dispatch(setSelectedAppointmentId(appointment.id))

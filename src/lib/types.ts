@@ -52,29 +52,78 @@ export const APPOINTMENT_OBJ_MAP: Record<keyof Appointment, string> = {
   updatedAt: "Updated At",
 };
 
-// export type AppointmentDetails = Appointment & {
-//   patient: Patient;
-// };
+export type AppointmentDetails = Appointment & {
+  patient: Patient;
+};
 
-// export type CreateAppointmentRequest = {
-//   patientId: number;
-//   date: Date;
-//   reason: string;
-// };
+export type UpdateAppointmentRequest = {
+  id: number;
+  patientId?: number;
+  date?: Date;
+  name?: string;
+};
 
-// export type UpdateAppointmentRequest = {
-//   id: number;
-//   patientId?: number;
-//   date?: Date;
-//   reason?: string;
-// };
+export type CreateBillingRequest = {
+  appointmentId: number;
+  amount: number;
+  description?: string;
+};
 
-// export type ObjectsTableProps<T extends Record<string, unknown>> = {
-//   data: T[] | null | undefined;
-//   fieldTranslations?: FieldTranslations;
-//   emptyText?: string;
-//   onRowClick?: (row: T) => void;
-//   onAction?: (row: T) => void;
-//   actionLabel?: string | ((row: T) => string);
-//   isActionDisabled?: (row: T) => boolean;
-// };
+export type UpdateBillingRequest = {
+  id: number;
+  amount?: number;
+  description?: string;
+};
+
+export type BillingStatus =
+  | "DRAFT"
+  | "INVOICED"
+  | "PAID"
+  | "CANCELED"
+  | "DELETED";
+
+export type Billing = {
+  id: number;
+  appointmentId: number;
+  amount: number;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  status: BillingStatus;
+};
+
+// export enum BillingStatusEnum {
+//   DRAFT = "DRAFT",
+//   INVOICED = "INVOICED",
+//   PAID = "PAID",
+//   CANCELED = "CANCELED",
+//   DELETED = "DELETED",
+// }
+
+export const BILLING_STATUS: Record<BillingStatus, BillingStatus> = {
+  DRAFT: "DRAFT",
+  INVOICED: "INVOICED",
+  PAID: "PAID",
+  CANCELED: "CANCELED",
+  DELETED: "DELETED",
+};
+
+export const BILLING_OBJ_MAP: Record<keyof Billing, string> = {
+  id: "ID",
+  appointmentId: "Appointment ID",
+  amount: "Amount",
+  description: "Description",
+  status: "Status",
+  createdAt: "Created At",
+  updatedAt: "Updated At",
+};
+
+export type ObjectsTableProps<T extends Record<string, unknown>> = {
+  data: T[] | null | undefined;
+  fieldTranslations?: FieldTranslations;
+  emptyText?: string;
+  onRowClick?: (row: T) => void;
+  onAction?: (row: T) => void;
+  actionLabel?: string | ((row: T) => string);
+  isActionDisabled?: (row: T) => boolean;
+};

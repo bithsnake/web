@@ -104,7 +104,27 @@ export function ObjectsTable<T extends Record<string, unknown>>({
   isActionDisabled,
 }: ObjectsTableProps<T>) {
   const [sortState, setSortState] = useState<SortState>(null);
-  const columns = data && data.length > 0 ? Object.keys(data[0]) : [];
+
+  const columns = useMemo(() => {
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    const dataKeys = Object.keys(data[0]);
+
+    if (!fieldTranslations) {
+      return dataKeys;
+    }
+
+    const translationOrderedKeys = Object.keys(fieldTranslations).filter(
+      (key) => dataKeys.includes(key),
+    );
+    const remainingDataKeys = dataKeys.filter(
+      (key) => !translationOrderedKeys.includes(key),
+    );
+
+    return [...translationOrderedKeys, ...remainingDataKeys];
+  }, [data, fieldTranslations]);
 
   const sortedData = useMemo(() => {
     if (!sortState || !data || data.length === 0) {

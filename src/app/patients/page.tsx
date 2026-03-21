@@ -18,6 +18,7 @@ import {
 } from "@/lib/features/patients-api";
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { ObjectsTable } from "../_components/objects-table";
+import { QuickCreatePanel } from "../_components/quick-create-panel";
 
 export default function PatientsPage() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -168,8 +169,8 @@ export default function PatientsPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-(--line) bg-(--panel) p-4 md:p-5">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[auto_minmax(0,1fr)]">
+        <QuickCreatePanel>
           <CreatePatientForm
             onSuccess={handleCreateSuccess}
             onError={handleCreateError}
@@ -179,7 +180,7 @@ export default function PatientsPage() {
               Error: {formError}
             </p>
           )}
-        </section>
+        </QuickCreatePanel>
 
         <section className="rounded-2xl border border-(--line) bg-(--panel) p-4 md:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

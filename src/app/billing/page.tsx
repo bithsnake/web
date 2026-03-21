@@ -21,6 +21,7 @@ import {
 
 import { BILLING_STATUS } from "@/lib/types";
 import { ObjectsTable } from "../_components/objects-table";
+import { QuickCreatePanel } from "../_components/quick-create-panel";
 
 export default function BillingsPage() {
   const billingObjMap: Record<keyof Billing, string> = Object.entries(
@@ -210,8 +211,8 @@ export default function BillingsPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-(--line) bg-(--panel) p-4 md:p-5">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[auto_minmax(0,1fr)]">
+        <QuickCreatePanel>
           <CreateBillingForm
             onSuccess={handleCreateSuccess}
             onError={handleCreateError}
@@ -221,7 +222,7 @@ export default function BillingsPage() {
               Error: {formError}
             </p>
           )}
-        </section>
+        </QuickCreatePanel>
 
         <section className="rounded-2xl border border-(--line) bg-(--panel) p-4 md:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

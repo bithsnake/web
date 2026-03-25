@@ -5,7 +5,7 @@ import {
   useGetDoctorsQuery,
 } from "@/lib/features/appointments-api";
 import { useGetPatientsQuery } from "@/lib/features/patients-api";
-import { Appointment } from "@/lib/types";
+import { Appointment, APPOINTMENT_TYPE_OBJ_MAP } from "@/lib/types";
 import { useState } from "react";
 import { SelectField } from "./select-field";
 
@@ -48,6 +48,7 @@ export function CreateAppointmentForm({
       const newAppointment = await createAppointment({
         name,
         patientId: Number(patientId),
+        type: "CHECKUP",
         userId: Number(userId),
         date: new Date(date).toISOString(),
       }).unwrap();
@@ -154,6 +155,21 @@ export function CreateAppointmentForm({
               label: `${label} (${doctor.email})`,
             };
           })}
+        />
+
+        <SelectField
+          label="Type"
+          value={"CHECKUP"}
+          onChange={() => {}}
+          disabled={
+            !patientId || isLoading || isPatientsLoading || isDoctorsLoading
+          }
+          options={Object.entries(APPOINTMENT_TYPE_OBJ_MAP).map(
+            ([value, label]) => ({
+              value,
+              label,
+            }),
+          )}
         />
       </div>
 

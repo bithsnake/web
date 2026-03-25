@@ -21,11 +21,37 @@ export type ObjectDetailsTableProps<T extends Record<string, unknown>> = {
   emptyText?: string;
 };
 
-export type AppointmentStatus = "Scheduled" | "Completed" | "Canceled";
+export type AppointmentStatusType =
+  | "SCHEDULED"
+  | "ONGOING"
+  | "COMPLETED"
+  | "CANCELED"
+  | "DELETED";
+export type AppointmentStatus =
+  | "Scheduled"
+  | "Ongoing"
+  | "Completed"
+  | "Canceled"
+  | "Deleted";
+
+export type AppointmentType =
+  | "CHECKUP"
+  | "CLEANING"
+  | "FILLING"
+  | "EXTRACTION"
+  | "ROOT_CANAL"
+  | "ORTHODONTIC"
+  | "PROSTHODONTIC"
+  | "PEDIATRIC"
+  | "EMERGENCY"
+  | "OTHER"
+  | "FOLLOW_UP"
+  | "CONSULTATION";
 
 export type Appointment = {
   id: number;
   name: string;
+  type: AppointmentType;
   status: AppointmentStatus;
   userId: number;
   patientId: number;
@@ -39,17 +65,60 @@ export type CreateAppointmentRequest = {
   patientId: number;
   userId: number;
   date: string;
+  type: AppointmentType;
+};
+
+export const APPOINTMENT_STATUS: Record<
+  AppointmentStatusType,
+  AppointmentStatusType
+> = {
+  SCHEDULED: "SCHEDULED",
+  ONGOING: "ONGOING",
+  COMPLETED: "COMPLETED",
+  CANCELED: "CANCELED",
+  DELETED: "DELETED",
+};
+
+export const APPOINTMENT_TYPE: Record<AppointmentType, AppointmentType> = {
+  CHECKUP: "CHECKUP",
+  CLEANING: "CLEANING",
+  FILLING: "FILLING",
+  EXTRACTION: "EXTRACTION",
+  ROOT_CANAL: "ROOT_CANAL",
+  ORTHODONTIC: "ORTHODONTIC",
+  PROSTHODONTIC: "PROSTHODONTIC",
+  PEDIATRIC: "PEDIATRIC",
+  EMERGENCY: "EMERGENCY",
+  OTHER: "OTHER",
+  FOLLOW_UP: "FOLLOW_UP",
+  CONSULTATION: "CONSULTATION",
 };
 
 export const APPOINTMENT_OBJ_MAP: Record<keyof Appointment, string> = {
   id: "ID",
   name: "Name",
   status: "Status",
+  type: "Type",
   userId: "User ID",
   patientId: "Patient ID",
   date: "Date",
   createdAt: "Created At",
   updatedAt: "Updated At",
+};
+
+export const APPOINTMENT_TYPE_OBJ_MAP: Record<AppointmentType, string> = {
+  CHECKUP: "Checkup",
+  CLEANING: "Cleaning",
+  FILLING: "Filling",
+  EXTRACTION: "Extraction",
+  ROOT_CANAL: "Root Canal",
+  ORTHODONTIC: "Orthodontic",
+  PROSTHODONTIC: "Prosthodontic",
+  PEDIATRIC: "Pediatric",
+  EMERGENCY: "Emergency",
+  OTHER: "Other",
+  FOLLOW_UP: "Follow-up",
+  CONSULTATION: "Consultation",
 };
 
 export type AppointmentDetails = Appointment & {
@@ -80,7 +149,8 @@ export type BillingStatus =
   | "INVOICED"
   | "PAID"
   | "CANCELED"
-  | "DELETED";
+  | "DELETED"
+  | "OVERDUE";
 
 export type Billing = {
   id: number;
@@ -106,6 +176,7 @@ export const BILLING_STATUS: Record<BillingStatus, BillingStatus> = {
   PAID: "PAID",
   CANCELED: "CANCELED",
   DELETED: "DELETED",
+  OVERDUE: "OVERDUE",
 };
 
 export const BILLING_OBJ_MAP: Record<keyof Billing, string> = {
@@ -122,8 +193,32 @@ export type ObjectsTableProps<T extends Record<string, unknown>> = {
   data: T[] | null | undefined;
   fieldTranslations?: FieldTranslations;
   emptyText?: string;
+  typeColorMap?: Record<string, string>;
   onRowClick?: (row: T) => void;
   onAction?: (row: T) => void;
   actionLabel?: string | ((row: T) => string);
   isActionDisabled?: (row: T) => boolean;
 };
+
+export type StatusTagTone =
+  | "success"
+  | "warning"
+  | "info"
+  | "danger"
+  | "neutral";
+
+// Pastel accents for appointment type badges.
+export const APPOINTMENT_TYPE_COLOR_TONE_MAP = {
+  CHECKUP: "#7FC8F8",
+  CLEANING: "#9BE7C4",
+  FILLING: "#F7C59F",
+  EXTRACTION: "#F2A7A7",
+  ROOT_CANAL: "#C7C9F4",
+  ORTHODONTIC: "#A8DADC",
+  PROSTHODONTIC: "#B8E0A5",
+  PEDIATRIC: "#FFD6A5",
+  EMERGENCY: "#F6B0C3",
+  OTHER: "#D6D6D6",
+  FOLLOW_UP: "#BFD7EA",
+  CONSULTATION: "#CDEAC0",
+} as const satisfies Record<AppointmentType, string>;

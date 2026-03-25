@@ -1,6 +1,7 @@
 "use client";
 
 import { ObjectDetailsTableProps } from "@/lib/types";
+import { APPOINTMENT_TYPE_COLOR_TONE_MAP } from "@/lib/types";
 import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
 
 function formatValue(value: unknown): string {
@@ -36,6 +37,21 @@ function renderDetailsValue(key: string, value: unknown): React.ReactNode {
   if (key === "status" && typeof value === "string") {
     return (
       <StatusTag label={formatStatusLabel(value)} tone={getStatusTone(value)} />
+    );
+  }
+
+  if (key === "type" && typeof value === "string") {
+    const mappedColor =
+      APPOINTMENT_TYPE_COLOR_TONE_MAP[
+        value as keyof typeof APPOINTMENT_TYPE_COLOR_TONE_MAP
+      ];
+
+    return (
+      <StatusTag
+        label={formatStatusLabel(value)}
+        tone="neutral"
+        colorHex={mappedColor}
+      />
     );
   }
 

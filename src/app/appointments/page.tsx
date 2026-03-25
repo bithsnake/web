@@ -1,7 +1,11 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { Appointment, APPOINTMENT_OBJ_MAP } from "@/lib/types";
+import {
+  Appointment,
+  APPOINTMENT_OBJ_MAP,
+  APPOINTMENT_TYPE_COLOR_TONE_MAP,
+} from "@/lib/types";
 import { AppShell } from "../_components/app-shell";
 import {
   useGetAppointmentByIdQuery,
@@ -277,8 +281,10 @@ export default function AppointmentsPage() {
                     date: "Appointment Date",
                     createdAt: "Created At",
                     updatedAt: "Updated At",
+                    type: "Type",
                     status: "Status",
                   }}
+                  typeColorMap={APPOINTMENT_TYPE_COLOR_TONE_MAP}
                   onRowClick={(appointment) =>
                     dispatch(setSelectedAppointmentId(appointment.id))
                   }

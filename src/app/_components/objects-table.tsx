@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import { FieldTranslations } from "@/lib/types";
 import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
+import { TypeTag } from "./type-tag";
 
 type ObjectsTableProps<T extends Record<string, unknown>> = {
   data: T[] | null | undefined;
   fieldTranslations?: FieldTranslations;
   emptyText?: string;
+  typeColorMap?: Record<string, string>;
   onRowClick?: (row: T) => void;
   onAction?: (row: T) => void;
   actionLabel?: string | ((row: T) => string);
@@ -31,11 +33,19 @@ function formatCellValue(value: unknown): string {
   return String(value);
 }
 
-function renderCellValue(key: string, value: unknown): React.ReactNode {
+function renderCellValue(
+  key: string,
+  value: unknown,
+  typeColorMap?: Record<string, string>,
+): React.ReactNode {
   if (key === "status" && typeof value === "string") {
     return (
       <StatusTag label={formatStatusLabel(value)} tone={getStatusTone(value)} />
     );
+  }
+
+  if (key === "type" && typeof value === "string" && typeColorMap) {
+    return <TypeTag typeValue={value} colorMap={typeColorMap} />;
   }
 
   return formatCellValue(value);
@@ -98,6 +108,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
   data,
   fieldTranslations,
   emptyText = "No data available.",
+  typeColorMap,
   onRowClick,
   onAction,
   actionLabel = "Action",
@@ -202,7 +213,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
           >
             {columns.map((key) => (
               <td key={key} className="px-4 py-3 align-top">
-                {renderCellValue(key, row[key])}
+                {renderCellValue(key, row[key], typeColorMap)}
               </td>
             ))}
             {onAction ? (

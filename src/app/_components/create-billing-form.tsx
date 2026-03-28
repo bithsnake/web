@@ -5,6 +5,7 @@ import { Billing } from "@/lib/types";
 import { useState } from "react";
 import { SelectField } from "./select-field";
 import { useGetAppointmentsQuery } from "@/lib/features/appointments-api";
+import { BrandButton } from "./brand-button";
 
 interface CreateBillingFormProps {
   onSuccess: (billing: Billing) => void;
@@ -167,13 +168,13 @@ export function CreateBillingForm({
         ) : null}
       </div>
 
-      <button
+      <BrandButton
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-xl bg-(--brand) px-3 py-2.5 font-medium text-white shadow-sm transition hover:bg-(--brand-strong) disabled:opacity-50"
+        className="w-full px-3 py-2.5"
       >
         {isLoading ? "Adding..." : "Add Billing"}
-      </button>
+      </BrandButton>
     </form>
   );
 }

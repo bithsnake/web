@@ -5,6 +5,7 @@ import appointmentsUiReducer from "./features/appointments-ui-slice";
 import { appointmentsApi } from "./features/appointments-api";
 import billingsUiReducer from "./features/billings-ui-slice";
 import { billingsApi } from "./features/billings-api";
+import dashboardApi from "./features/dashboard-api";
 
 export const store = configureStore({
   reducer: {
@@ -14,12 +15,14 @@ export const store = configureStore({
     [appointmentsApi.reducerPath]: appointmentsApi.reducer,
     billingsUi: billingsUiReducer,
     [billingsApi.reducerPath]: billingsApi.reducer,
+    [dashboardApi.reducerPath]: dashboardApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       patientsApi.middleware,
       appointmentsApi.middleware,
       billingsApi.middleware,
+      dashboardApi.middleware,
     ),
 });
 

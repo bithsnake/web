@@ -23,6 +23,7 @@ import { CreateAppointmentForm } from "../_components/create-appointment-form";
 import { useState, useMemo } from "react";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/quick-create-panel";
+import { BrandButton } from "../_components/brand-button";
 
 export default function AppointmentsPage() {
   const appointmentObjMap: Record<string, string> = Object.entries(
@@ -215,18 +216,19 @@ export default function AppointmentsPage() {
                   placeholder="Search by id or name"
                   className="min-w-55 flex-1 rounded-xl border border-(--line) bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
                 />
-                <button
+                <BrandButton
                   onClick={() => dispatch(clearSearch())}
-                  className="rounded-xl border border-(--line) bg-white px-3 py-2 text-sm shadow-sm transition hover:cursor-pointer hover:bg-(--line)"
+                  variant="alternate"
+                  className="px-3 py-2"
                 >
                   Clear
-                </button>
-                <button
+                </BrandButton>
+                <BrandButton
                   onClick={() => void refetch()}
-                  className="rounded-xl border border-transparent bg-(--brand) px-3 py-2 text-sm text-white shadow-sm transition hover:cursor-pointer hover:bg-(--brand-strong)"
+                  className="px-3 py-2"
                 >
                   Refresh
-                </button>
+                </BrandButton>
               </div>
             ) : null}
           </div>
@@ -243,12 +245,13 @@ export default function AppointmentsPage() {
                     <h3 className="text-base font-semibold">
                       Appointment Details
                     </h3>
-                    <button
+                    <BrandButton
                       onClick={() => dispatch(clearSelectedAppointmentId())}
-                      className="rounded-xl border border-(--line) bg-white px-3 py-1 text-sm transition hover:bg-(--line)"
+                      variant="alternate"
+                      className="px-3 py-1"
                     >
                       Back to list
-                    </button>
+                    </BrandButton>
                   </div>
 
                   {isLoadingById ? (

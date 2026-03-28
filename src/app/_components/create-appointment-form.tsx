@@ -8,6 +8,7 @@ import { useGetPatientsQuery } from "@/lib/features/patients-api";
 import { Appointment, APPOINTMENT_TYPE_OBJ_MAP } from "@/lib/types";
 import { useState } from "react";
 import { SelectField } from "./select-field";
+import { BrandButton } from "./brand-button";
 
 interface CreateAppointmentFormProps {
   onSuccess: (appointment: Appointment) => void;
@@ -203,13 +204,13 @@ export function CreateAppointmentForm({
         ) : null}
       </div>
 
-      <button
+      <BrandButton
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-xl bg-(--brand) px-3 py-2.5 font-medium text-white shadow-sm transition hover:bg-(--brand-strong) disabled:opacity-50"
+        className="w-full px-3 py-2.5"
       >
         {isLoading ? "Adding..." : "Add Appointment"}
-      </button>
+      </BrandButton>
     </form>
   );
 }

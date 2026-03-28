@@ -222,3 +222,39 @@ export const APPOINTMENT_TYPE_COLOR_TONE_MAP = {
   FOLLOW_UP: "#BFD7EA",
   CONSULTATION: "#CDEAC0",
 } as const satisfies Record<AppointmentType, string>;
+
+export type Reminder = {
+  id: number;
+  appointmentId: number;
+  message: string;
+  date: Date;
+  createdAt: Date;
+  updatedAt: Date;
+} & {
+  appointment?: {
+    name?: string;
+  };
+};
+
+export type AppointMentWidgetItem = {
+  upcoming: Appointment[];
+  past: Appointment[];
+  cancelled: Appointment[];
+};
+
+export type BillingWidgetItem = {
+  pending: Billing[];
+  paid: Billing[];
+  overdue: Billing[];
+  draft: Billing[];
+};
+
+export type ReminderWidgetItem = {
+  data: Reminder[];
+};
+
+export type DashboardWidgetItems = {
+  appointMentWidgetItem: AppointMentWidgetItem;
+  billingWidgetItem: BillingWidgetItem;
+  remindersWidgetItem: ReminderWidgetItem;
+};

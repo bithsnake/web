@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { FieldTranslations } from "@/lib/types";
 import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
 import { TypeTag } from "./type-tag";
+import { BrandButton } from "./brand-button";
 
 type ObjectsTableProps<T extends Record<string, unknown>> = {
   data: T[] | null | undefined;
@@ -218,18 +219,19 @@ export function ObjectsTable<T extends Record<string, unknown>>({
             ))}
             {onAction ? (
               <td className="px-4 py-3">
-                <button
+                <BrandButton
                   onClick={(event) => {
                     event.stopPropagation();
                     onAction(row);
                   }}
                   disabled={isActionDisabled ? isActionDisabled(row) : false}
-                  className="rounded-lg border border-(--line) bg-white px-2.5 py-1.5 text-xs font-medium text-(--ink) shadow-sm transition hover:bg-(--line) disabled:cursor-not-allowed disabled:opacity-60"
+                  variant="alternate"
+                  className="rounded-lg px-2.5 py-1.5 text-xs"
                 >
                   {typeof actionLabel === "function"
                     ? actionLabel(row)
                     : actionLabel}
-                </button>
+                </BrandButton>
               </td>
             ) : null}
           </tr>

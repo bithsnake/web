@@ -3,6 +3,7 @@ import { FieldTranslations } from "@/lib/types";
 import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
 import { TypeTag } from "./type-tag";
 import { BrandButton } from "./brand-button";
+import { ElipsisHamburger } from "./elipsis-hamburger";
 
 type ObjectsTableProps<T extends Record<string, unknown>> = {
   data: T[] | null | undefined;
@@ -218,25 +219,11 @@ export function ObjectsTable<T extends Record<string, unknown>>({
               </td>
             ))}
             {onActions ? (
-              <td className="px-4 py-3 flex gap-4">
-                {onActions.map((obj, index) => (
-                  <BrandButton
-                    key={index}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      obj.onAction(row);
-                    }}
-                    disabled={
-                      obj.isActionDisabled ? obj.isActionDisabled(row) : false
-                    }
-                    variant="alternate"
-                    className="rounded-lg px-2.5 py-1.5 text-xs"
-                  >
-                    {typeof obj.actionLabel === "function"
-                      ? obj.actionLabel(row)
-                      : obj.actionLabel}
-                  </BrandButton>
-                ))}
+              <td
+                onClick={(e) => e.stopPropagation()}
+                className="px-4 py-3 flex gap-4"
+              >
+                <ElipsisHamburger key={index} onActions={onActions} />
               </td>
             ) : null}
           </tr>

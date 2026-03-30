@@ -48,6 +48,51 @@ option:hover {
   cursor: pointer;
 }
 
+/* Smooth menu animations */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-slideUp {
+    animation: slideUp 0.2s ease-out forwards;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+}
+
+/* Menu button hover effect */
+button[data-headlessui-state*="open"] {
+  color: var(--brand);
+}
+
 select:disabled:hover,
 option:disabled:hover {
   cursor: not-allowed;

@@ -1,0 +1,123 @@
+{
+  "patients": [
+    {
+      "id": 1,
+      "name": "Alice Andersson",
+      "email": "alice@dentis.local",
+      "createdAt": "2026-03-01T09:15:00.000Z",
+      "updatedAt": "2026-03-20T10:10:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Bjorn Berg",
+      "email": "bjorn@dentis.local",
+      "createdAt": "2026-03-02T08:45:00.000Z",
+      "updatedAt": "2026-03-24T13:05:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "Carla Chen",
+      "email": "carla@dentis.local",
+      "createdAt": "2026-03-05T12:05:00.000Z",
+      "updatedAt": "2026-03-27T15:40:00.000Z"
+    }
+  ],
+  "doctors": [
+    {
+      "id": 11,
+      "name": "Dr. Olivia Stone",
+      "firstName": "Olivia",
+      "lastName": "Stone",
+      "email": "olivia.stone@dentis.local"
+    },
+    {
+      "id": 12,
+      "name": "Dr. Noah Reed",
+      "firstName": "Noah",
+      "lastName": "Reed",
+      "email": "noah.reed@dentis.local"
+    }
+  ],
+  "appointments": [
+    {
+      "id": 100,
+      "name": "Spring checkup",
+      "type": "CHECKUP",
+      "status": "Scheduled",
+      "userId": 11,
+      "patientId": 1,
+      "date": "2026-04-02T09:30:00.000Z",
+      "createdAt": "2026-03-22T08:00:00.000Z",
+      "updatedAt": "2026-03-22T08:00:00.000Z"
+    },
+    {
+      "id": 101,
+      "name": "Deep cleaning",
+      "type": "CLEANING",
+      "status": "Completed",
+      "userId": 12,
+      "patientId": 2,
+      "date": "2026-03-25T11:00:00.000Z",
+      "createdAt": "2026-03-12T10:00:00.000Z",
+      "updatedAt": "2026-03-25T11:55:00.000Z"
+    },
+    {
+      "id": 102,
+      "name": "Emergency pain relief",
+      "type": "EMERGENCY",
+      "status": "Canceled",
+      "userId": 11,
+      "patientId": 3,
+      "date": "2026-03-29T15:15:00.000Z",
+      "createdAt": "2026-03-28T14:20:00.000Z",
+      "updatedAt": "2026-03-29T09:10:00.000Z"
+    }
+  ],
+  "billings": [
+    {
+      "id": 200,
+      "appointmentId": 100,
+      "amount": 1490,
+      "description": "Preventive checkup package",
+      "status": "INVOICED",
+      "createdAt": "2026-03-22T09:00:00.000Z",
+      "updatedAt": "2026-03-22T09:00:00.000Z"
+    },
+    {
+      "id": 201,
+      "appointmentId": 101,
+      "amount": 2190,
+      "description": "Deep cleaning and polish",
+      "status": "PAID",
+      "createdAt": "2026-03-24T12:10:00.000Z",
+      "updatedAt": "2026-03-25T12:10:00.000Z"
+    },
+    {
+      "id": 202,
+      "appointmentId": 102,
+      "amount": 990,
+      "description": "Emergency visit",
+      "status": "OVERDUE",
+      "createdAt": "2026-03-28T16:30:00.000Z",
+      "updatedAt": "2026-03-29T16:00:00.000Z"
+    }
+  ],
+  "reminders": [
+    {
+      "id": 300,
+      "appointmentId": 100,
+      "message": "Tomorrow at 09:30 - please arrive 10 minutes early.",
+      "date": "2026-04-01T09:30:00.000Z",
+      "createdAt": "2026-03-31T09:00:00.000Z",
+      "updatedAt": "2026-03-31T09:00:00.000Z"
+    },
+    {
+      "id": 301,
+      "appointmentId": 101,
+      "message": "Follow-up call completed.",
+      "date": "2026-03-26T08:00:00.000Z",
+      "createdAt": "2026-03-26T08:00:00.000Z",
+      "updatedAt": "2026-03-26T08:00:00.000Z"
+    }
+  ]
+}

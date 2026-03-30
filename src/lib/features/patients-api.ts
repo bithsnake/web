@@ -35,7 +35,9 @@ export const patientsApi = createApi({
       keepUnusedDataFor: 5,
     }),
     createPatient: builder.mutation<Patient, CreatePatientRequest>({
-      queryFn: async (newPatient) => ({ data: mockDb.createPatient(newPatient) }),
+      queryFn: async (newPatient) => ({
+        data: mockDb.createPatient(newPatient),
+      }),
       invalidatesTags: [patientsListTag],
     }),
     updatePatient: builder.mutation<

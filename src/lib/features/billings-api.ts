@@ -39,7 +39,9 @@ export const billingsApi = createApi({
       keepUnusedDataFor: 5,
     }),
     createBilling: builder.mutation<Billing, CreateBillingRequest>({
-      queryFn: async (newBilling) => ({ data: mockDb.createBilling(newBilling) }),
+      queryFn: async (newBilling) => ({
+        data: mockDb.createBilling(newBilling),
+      }),
       invalidatesTags: [billingsListTag],
     }),
     updateBilling: builder.mutation<Billing, UpdateBillingRequest>({

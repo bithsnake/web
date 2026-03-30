@@ -303,14 +303,21 @@ export default function BillingsPage() {
                     updatedAt: "Updated At",
                     status: "Status",
                   }}
-                  onRowClick={(billing) =>
+                  onRowClick={(billing: Billing) =>
                     dispatch(setSelectedBillingId(billing.id))
                   }
-                  onAction={(billing) => void handleSoftDeleteClick(billing.id)}
-                  actionLabel={(billing) =>
-                    isRowSoftDeleting(billing.id) ? "Deleting..." : "Delete"
-                  }
-                  isActionDisabled={(billing) => isRowSoftDeleting(billing.id)}
+                  onActions={[
+                    {
+                      onAction: (billing: Billing) =>
+                        void handleSoftDeleteClick(billing.id),
+                      actionLabel: (billing: Billing) =>
+                        isRowSoftDeleting(billing.id)
+                          ? "Deleting..."
+                          : "Delete",
+                      isActionDisabled: (billing: Billing) =>
+                        isRowSoftDeleting(billing.id),
+                    },
+                  ]}
                 />
               )}
             </div>

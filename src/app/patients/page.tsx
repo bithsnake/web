@@ -267,11 +267,14 @@ export default function PatientsPage() {
                   onRowClick={(patient) =>
                     dispatch(setSelectedPatientId(patient.id))
                   }
-                  onAction={(patient) => void handleDeleteClick(patient.id)}
-                  actionLabel={(patient) =>
-                    isRowDeleting(patient.id) ? "Deleting..." : "Delete"
-                  }
-                  isActionDisabled={(patient) => isRowDeleting(patient.id)}
+                  onActions={[
+                    {
+                      onAction: (patient) => void handleDeleteClick(patient.id),
+                      actionLabel: (patient) =>
+                        isRowDeleting(patient.id) ? "Deleting..." : "Delete",
+                      isActionDisabled: (patient) => isRowDeleting(patient.id),
+                    },
+                  ]}
                 />
               )}
             </div>

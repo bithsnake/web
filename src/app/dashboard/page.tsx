@@ -22,8 +22,7 @@ import { LoadingSpinner } from "../_components/loading-spinner";
 type DashboardWidgetId =
   | "upcoming-appointments"
   | "billing-status"
-  | "recent-reminders"
-  | "reminders";
+  | "recent-reminders";
 
 type DashboardWidgetOption = {
   id: DashboardWidgetId;
@@ -34,7 +33,6 @@ const DASHBOARD_WIDGET_OPTIONS: DashboardWidgetOption[] = [
   { id: "upcoming-appointments", label: "Upcoming Appointments" },
   { id: "billing-status", label: "Billing Status" },
   { id: "recent-reminders", label: "Recent Reminders" },
-  { id: "reminders", label: "Reminders" },
 ];
 
 const DASHBOARD_WIDGET_IDS = DASHBOARD_WIDGET_OPTIONS.map(
@@ -162,21 +160,6 @@ export default function DashBoardPage() {
 
                 {visibleWidgetIdSet.has("recent-reminders") ? (
                   <WidgetShell label="Recent Reminders" width="100%">
-                    <CardTable
-                      columns={["Message", "Appointment", "Created At"]}
-                      data={remindersWidgetItem.data.map((reminder) => ({
-                        Message: reminder.message,
-                        Appointment: reminder?.appointment?.name || "N/A",
-                        "Created At": new Date(
-                          reminder.createdAt,
-                        ).toLocaleDateString(),
-                      }))}
-                    />
-                  </WidgetShell>
-                ) : null}
-
-                {visibleWidgetIdSet.has("reminders") ? (
-                  <WidgetShell label="Reminders" width="100%">
                     <CardTable
                       columns={["Message", "Appointment", "Created At"]}
                       data={remindersWidgetItem.data.map((reminder) => ({

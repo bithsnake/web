@@ -123,6 +123,27 @@ export default function AppointmentsPage() {
     }
   }
 
+  async function handleSendReminder(appointmentId: number) {
+    const confirmed = window.confirm(
+      "Do you want to send a reminder to the patient in this appointment?",
+    );
+    if (!confirmed) return;
+
+    try {
+      window.alert(
+        "reminder sent to patient: " +
+          data?.find((appointment) => appointment.id === appointmentId)
+            ?.patientId,
+      );
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "data" in error
+          ? JSON.stringify((error as unknown as { data: unknown }).data)
+          : "Failed to delete appointment";
+      setFormError(message);
+    }
+  }
+
   if (isLoading) {
     return (
       <AppShell>
@@ -291,15 +312,28 @@ export default function AppointmentsPage() {
                   onRowClick={(appointment) =>
                     dispatch(setSelectedAppointmentId(appointment.id))
                   }
-                  onAction={(appointment) =>
-                    void handleSoftDeleteClick(appointment.id)
-                  }
-                  actionLabel={(appointment) =>
-                    isRowSoftDeleting(appointment.id) ? "Deleting..." : "Delete"
-                  }
-                  isActionDisabled={(appointment) =>
-                    isRowSoftDeleting(appointment.id)
-                  }
+                  onActions={[
+                    {
+                      onAction: (appointment) =>
+                        void handleSoftDeleteClick(appointment.id),
+                      actionLabel: (appointment) =>
+                        isRowSoftDeleting(appointment.id)
+                          ? "Deleting..."
+                          : "Delete",
+                      isActionDisabled: (appointment) =>
+                        isRowSoftDeleting(appointment.id),
+                    },
+                    {
+                      onAction: (appointment) =>
+                        void handleSendReminder(appointment.id),
+                      actionLabel: "Send Reminder",
+                      isActionDisabled: (appointment) =>
+                        isRowSoftDeleting(appointment.id) ||
+                        void appointment.status === "CANCELED" ||
+                        void appointment.status === "COMPLETED",
+                      // we need to get reminders for this apointment to be ablet o to know if we can send a reminder or not, but for now let's just disable the button if the appointment is not scheduled
+                    },
+                  ]}
                 />
               )}
             </div>

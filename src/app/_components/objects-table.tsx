@@ -10,9 +10,11 @@ type ObjectsTableProps<T extends Record<string, unknown>> = {
   emptyText?: string;
   typeColorMap?: Record<string, string>;
   onRowClick?: (row: T) => void;
-  onAction?: (row: T) => void;
-  actionLabel?: string | ((row: T) => string);
-  isActionDisabled?: (row: T) => boolean;
+  onActions?: {
+    onAction: (row: T) => void;
+    actionLabel?: string | ((row: T) => string);
+    isActionDisabled?: (row: T) => boolean;
+  }[];
 };
 
 type SortDirection = "asc" | "desc";
@@ -111,9 +113,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
   emptyText = "No data available.",
   typeColorMap,
   onRowClick,
-  onAction,
-  actionLabel = "Action",
-  isActionDisabled,
+  onActions,
 }: ObjectsTableProps<T>) {
   const [sortState, setSortState] = useState<SortState>(null);
 
@@ -195,7 +195,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
               </button>
             </th>
           ))}
-          {onAction ? (
+          {onActions ? (
             <th className="px-4 py-3 text-left text-xs tracking-wide">
               Actions
             </th>
@@ -217,21 +217,26 @@ export function ObjectsTable<T extends Record<string, unknown>>({
                 {renderCellValue(key, row[key], typeColorMap)}
               </td>
             ))}
-            {onAction ? (
-              <td className="px-4 py-3">
-                <BrandButton
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onAction(row);
-                  }}
-                  disabled={isActionDisabled ? isActionDisabled(row) : false}
-                  variant="alternate"
-                  className="rounded-lg px-2.5 py-1.5 text-xs"
-                >
-                  {typeof actionLabel === "function"
-                    ? actionLabel(row)
-                    : actionLabel}
-                </BrandButton>
+            {onActions ? (
+              <td className="px-4 py-3 flex gap-4">
+                {onActions.map((obj, index) => (
+                  <BrandButton
+                    key={index}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      obj.onAction(row);
+                    }}
+                    disabled={
+                      obj.isActionDisabled ? obj.isActionDisabled(row) : false
+                    }
+                    variant="alternate"
+                    className="rounded-lg px-2.5 py-1.5 text-xs"
+                  >
+                    {typeof obj.actionLabel === "function"
+                      ? obj.actionLabel(row)
+                      : obj.actionLabel}
+                  </BrandButton>
+                ))}
               </td>
             ) : null}
           </tr>

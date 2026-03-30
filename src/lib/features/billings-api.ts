@@ -1,20 +1,20 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { API_BASE_URL } from "@/lib/api";
+import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
   Billing,
   CreateBillingRequest,
   UpdateBillingRequest,
 } from "@/lib/types";
+import { mockDb } from "@/lib/mocks/mock-db";
 
 const billingsListTag = { type: "Billings" as const, id: "LIST" };
 
 export const billingsApi = createApi({
   reducerPath: "billingsApi",
-  baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
+  baseQuery: fakeBaseQuery<{ message: string }>(),
   tagTypes: ["Billings"],
   endpoints: (builder) => ({
     getBillings: builder.query<Billing[], void>({
-      query: () => "/billings",
+      queryFn: async () => ({ data: mockDb.getBillings() }),
       providesTags: (result) =>
         result
           ? [
@@ -27,34 +27,43 @@ export const billingsApi = createApi({
           : [billingsListTag],
     }),
     getBillingById: builder.query<Billing, number>({
-      query: (id) => `/billings/${id}`,
+      queryFn: async (id) => {
+        const billing = mockDb.getBillingById(id);
+        if (!billing) {
+          return { error: { message: `Billing with id ${id} was not found` } };
+        }
+
+        return { data: billing };
+      },
       providesTags: (result, error, id) => [{ type: "Billings", id }],
       keepUnusedDataFor: 5,
     }),
     createBilling: builder.mutation<Billing, CreateBillingRequest>({
-      query: (newBilling) => ({
-        url: "/billings",
-        method: "POST",
-        body: newBilling,
-      }),
+      queryFn: async (newBilling) => ({ data: mockDb.createBilling(newBilling) }),
       invalidatesTags: [billingsListTag],
     }),
     updateBilling: builder.mutation<Billing, UpdateBillingRequest>({
-      query: ({ id, ...patch }) => ({
-        url: `/billings/${id}`,
-        method: "PUT",
-        body: patch,
-      }),
+      queryFn: async (payload) => {
+        try {
+          return { data: mockDb.updateBilling(payload) };
+        } catch (error) {
+          return {
+            error: {
+              message:
+                error instanceof Error
+                  ? error.message
+                  : `Billing with id ${payload.id} was not found`,
+            },
+          };
+        }
+      },
       invalidatesTags: (result, error, { id }) => [
         billingsListTag,
         { type: "Billings", id },
       ],
     }),
     softDeleteBilling: builder.mutation<{ success: boolean }, number>({
-      query: (id) => ({
-        url: `/billings/${id}`,
-        method: "DELETE",
-      }),
+      queryFn: async (id) => ({ data: mockDb.softDeleteBilling(id) }),
       invalidatesTags: (result, error, id) => [
         billingsListTag,
         { type: "Billings", id },

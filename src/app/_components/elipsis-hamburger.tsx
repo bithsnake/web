@@ -70,7 +70,8 @@ export function ElipsisHamburger<T extends Record<string, unknown>>({
       {isOpen ? (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-xl border border-[--brand]/20 bg-white shadow-xl animate-slideUp animate-fadeIn"
+          style={{ borderWidth: "1px", borderColor: "var(--line)" }}
+          className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-xl border  bg-white shadow-xl animate-slideUp animate-fadeIn"
         >
           {onActions.map(
             ({ onAction, actionLabel, isActionDisabled }, index) => (
@@ -88,7 +89,7 @@ export function ElipsisHamburger<T extends Record<string, unknown>>({
                   disabled={
                     isActionDisabled ? isActionDisabled({} as T) : false
                   }
-                  className="w-full px-4 py-2.5 text-left text-sm transition-all duration-200 ease-out hover:bg-[--brand]/8 hover:text-[--brand] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full px-4 py-2.5 text-center text-md font-semibold transition-all duration-200 ease-out hover:bg-(--line) hover:text-[--brand] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {typeof actionLabel === "function"
                     ? actionLabel({} as T) || `No label-${index}`

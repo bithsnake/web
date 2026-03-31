@@ -19,6 +19,7 @@ export type ObjectDetailsTableProps<T extends Record<string, unknown>> = {
   data: T | null | undefined;
   fieldTranslations?: FieldTranslations;
   emptyText?: string;
+  typeColorMap?: Record<string, string>;
 };
 
 export type AppointmentStatusType =

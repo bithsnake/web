@@ -1,7 +1,6 @@
 "use client";
 
 import { ObjectDetailsTableProps } from "@/lib/types";
-import { APPOINTMENT_TYPE_COLOR_TONE_MAP } from "@/lib/types";
 import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
 
 function formatValue(value: unknown): string {
@@ -33,18 +32,19 @@ function fallbackLabel(key: string): string {
     .replace(/^./, (char) => char.toUpperCase());
 }
 
-function renderDetailsValue(key: string, value: unknown): React.ReactNode {
+function renderDetailsValue(
+  key: string,
+  value: unknown,
+  typeColorMap?: Record<string, string>,
+): React.ReactNode {
   if (key === "status" && typeof value === "string") {
     return (
       <StatusTag label={formatStatusLabel(value)} tone={getStatusTone(value)} />
     );
   }
 
-  if (key === "type" && typeof value === "string") {
-    const mappedColor =
-      APPOINTMENT_TYPE_COLOR_TONE_MAP[
-        value as keyof typeof APPOINTMENT_TYPE_COLOR_TONE_MAP
-      ];
+  if (key === "type" && typeof value === "string" && typeColorMap) {
+    const mappedColor = typeColorMap[value];
 
     return (
       <StatusTag
@@ -62,6 +62,7 @@ export function ObjectDetailsTable<T extends Record<string, unknown>>({
   data,
   fieldTranslations = {},
   emptyText = "No details available.",
+  typeColorMap,
 }: ObjectDetailsTableProps<T>) {
   if (!data) {
     return <p className="text-sm text-(--muted)">{emptyText}</p>;
@@ -77,7 +78,9 @@ export function ObjectDetailsTable<T extends Record<string, unknown>>({
             <th className="w-48 bg-(--line) px-3 py-2 text-left font-semibold">
               {fieldTranslations[key] ?? fallbackLabel(key)}
             </th>
-            <td className="px-3 py-2">{renderDetailsValue(key, value)}</td>
+            <td className="px-3 py-2">
+              {renderDetailsValue(key, value, typeColorMap)}
+            </td>
           </tr>
         ))}
       </tbody>

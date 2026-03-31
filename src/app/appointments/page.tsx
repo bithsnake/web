@@ -287,6 +287,7 @@ export default function AppointmentsPage() {
                       data={appointmentById}
                       fieldTranslations={appointmentObjMap}
                       emptyText="No data available for this appointment."
+                      typeColorMap={APPOINTMENT_TYPE_COLOR_TONE_MAP}
                     />
                   ) : (
                     <p className="mt-2 text-sm text-(--muted)">

@@ -3,9 +3,9 @@
 import { useCreateBillingMutation } from "@/lib/features/billings-api";
 import { Billing } from "@/lib/types";
 import { useState } from "react";
-import { SelectField } from "./select-field";
+import { SelectField } from "../select-field";
 import { useGetAppointmentsQuery } from "@/lib/features/appointments-api";
-import { BrandButton } from "./brand-button";
+import { BrandButton } from "../buttons/brand-button";
 
 interface CreateBillingFormProps {
   onSuccess: (billing: Billing) => void;

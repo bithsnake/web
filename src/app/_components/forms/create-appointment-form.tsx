@@ -7,8 +7,8 @@ import {
 import { useGetPatientsQuery } from "@/lib/features/patients-api";
 import { Appointment, APPOINTMENT_TYPE_OBJ_MAP } from "@/lib/types";
 import { useState } from "react";
-import { SelectField } from "./select-field";
-import { BrandButton } from "./brand-button";
+import { SelectField } from "../select-field";
+import { BrandButton } from "../buttons/brand-button";
 
 interface CreateAppointmentFormProps {
   onSuccess: (appointment: Appointment) => void;

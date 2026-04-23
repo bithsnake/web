@@ -1,4 +1,4 @@
-import { SideNav } from "./side-nav";
+import { SideNav } from "../side-nav";
 
 export function AppShell({
   children,

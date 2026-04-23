@@ -6,16 +6,16 @@ import {
   useGetDashboardWidgetsListQuery,
 } from "@/lib/features/dashboard-api";
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "../_components/app-shell";
-import { DashboardSidePanel } from "../_components/dashboard-side-panel";
-import { WidgetShell } from "../_components/widget-shell";
+import { AppShell } from "../_components/shells/app-shell";
+import { DashboardSidePanel } from "../_components/panels/dashboard-side-panel";
+import { WidgetShell } from "../_components/shells/widget-shell";
 import {
   AppointMentWidgetItem,
   BillingWidgetItem,
   ReminderWidgetItem,
 } from "@/lib/types";
 import { CardTable } from "../_components/card-table";
-import { BrandButton } from "../_components/brand-button";
+import { BrandButton } from "../_components/buttons/brand-button";
 import { Grid } from "../_components/grid";
 import { LoadingSpinner } from "../_components/loading-spinner";
 

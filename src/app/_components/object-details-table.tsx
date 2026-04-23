@@ -1,7 +1,7 @@
 "use client";
 
 import { ObjectDetailsTableProps } from "@/lib/types";
-import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
+import { StatusTag, formatStatusLabel, getStatusTone } from "./tags/status-tag";
 
 function formatValue(value: unknown): string {
   if (value === null || value === undefined) return "-";

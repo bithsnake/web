@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { AppShell } from "../_components/app-shell";
+import { AppShell } from "../_components/shells/app-shell";
 
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { useState, useMemo } from "react";
@@ -10,7 +10,7 @@ import {
   useGetBillingByIdQuery,
   useGetBillingsQuery,
 } from "@/lib/features/billings-api";
-import { CreateBillingForm } from "../_components/create-billing-form";
+import { CreateBillingForm } from "../_components/forms/create-billing-form";
 import { useSoftDeleteBillingMutation } from "@/lib/features/billings-api";
 import {
   clearSearch,
@@ -22,7 +22,7 @@ import {
 import { BILLING_STATUS } from "@/lib/types";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/quick-create-panel";
-import { BrandButton } from "../_components/brand-button";
+import { BrandButton } from "../_components/buttons/brand-button";
 
 export default function BillingsPage() {
   const billingObjMap: Record<keyof Billing, string> = Object.entries(

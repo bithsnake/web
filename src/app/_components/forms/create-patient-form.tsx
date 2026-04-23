@@ -3,7 +3,7 @@
 import { useCreatePatientMutation } from "@/lib/features/patients-api";
 import { Patient } from "@/lib/types";
 import { useState } from "react";
-import { BrandButton } from "./brand-button";
+import { BrandButton } from "../buttons/brand-button";
 
 interface CreatePartientFormProps {
   onSuccess: (patient: Patient) => void;

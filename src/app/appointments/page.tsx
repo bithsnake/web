@@ -6,7 +6,7 @@ import {
   APPOINTMENT_OBJ_MAP,
   APPOINTMENT_TYPE_COLOR_TONE_MAP,
 } from "@/lib/types";
-import { AppShell } from "../_components/app-shell";
+import { AppShell } from "../_components/shells/app-shell";
 import {
   useGetAppointmentByIdQuery,
   useGetAppointmentsQuery,
@@ -19,11 +19,11 @@ import {
   setSelectedAppointmentId,
 } from "@/lib/features/appointments-ui-slice";
 import { ObjectDetailsTable } from "../_components/object-details-table";
-import { CreateAppointmentForm } from "../_components/create-appointment-form";
+import { CreateAppointmentForm } from "../_components/forms/create-appointment-form";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/quick-create-panel";
-import { BrandButton } from "../_components/brand-button";
+import { BrandButton } from "../_components/buttons/brand-button";
 import { useCreateReminderMutation } from "@/lib/features/reminders-api";
 import { useScrollToRef } from "../shared/hooks";
 

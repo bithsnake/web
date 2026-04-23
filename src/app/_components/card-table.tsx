@@ -1,6 +1,6 @@
 import { APPOINTMENT_TYPE_COLOR_TONE_MAP } from "@/lib/types";
-import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
-import { TypeTag } from "./type-tag";
+import { StatusTag, formatStatusLabel, getStatusTone } from "./tags/status-tag";
+import { TypeTag } from "./tags/type-tag";
 
 function renderCardCell(column: string, value: unknown): React.ReactNode {
   const normalizedColumn = column.trim().toLowerCase();

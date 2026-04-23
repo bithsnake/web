@@ -7,10 +7,10 @@ import {
   setSelectedPatientId,
   clearSelectedPatientId,
 } from "@/lib/features/patients-ui-slice";
-import { AppShell } from "../_components/app-shell";
+import { AppShell } from "../_components/shells/app-shell";
 import { Patient } from "../../lib/types";
 import { useMemo, useState } from "react";
-import { CreatePatientForm } from "../_components/create-patient-form";
+import { CreatePatientForm } from "../_components/forms/create-patient-form";
 import {
   useGetPatientsQuery,
   useDeletePatientMutation,
@@ -19,7 +19,7 @@ import {
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/quick-create-panel";
-import { BrandButton } from "../_components/brand-button";
+import { BrandButton } from "../_components/buttons/brand-button";
 
 export default function PatientsPage() {
   const [formError, setFormError] = useState<string | null>(null);

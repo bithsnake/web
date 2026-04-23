@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { FieldTranslations } from "@/lib/types";
-import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
-import { TypeTag } from "./type-tag";
+import { StatusTag, formatStatusLabel, getStatusTone } from "./tags/status-tag";
+import { TypeTag } from "./tags/type-tag";
 // import { BrandButton } from "./brand-button";
 import { ElipsisHamburger } from "./elipsis-hamburger";
 

@@ -11,6 +11,12 @@ export type CreatePatientRequest = {
   email: string;
 };
 
+export type CreateReminderRequest = {
+  appointmentId: number;
+  patientId: number;
+  message: string;
+};
+
 export type FieldTranslations = {
   [key: string]: string;
 };

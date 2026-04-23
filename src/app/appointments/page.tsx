@@ -20,10 +20,12 @@ import {
 } from "@/lib/features/appointments-ui-slice";
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { CreateAppointmentForm } from "../_components/create-appointment-form";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/quick-create-panel";
 import { BrandButton } from "../_components/brand-button";
+import { useCreateReminderMutation } from "@/lib/features/reminders-api";
+import { useScrollToRef } from "../shared/hooks";
 
 export default function AppointmentsPage() {
   const appointmentObjMap: Record<string, string> = Object.entries(
@@ -44,6 +46,7 @@ export default function AppointmentsPage() {
   const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<
     number | null
   >(null);
+  const [ref, scrollTo] = useScrollToRef<HTMLTableRowElement>();
 
   // search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
   const search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
@@ -57,20 +60,31 @@ export default function AppointmentsPage() {
       refetchOnMountOrArgChange: true,
     });
 
+  const [
+    createReminder,
+    {
+      isLoading: isCreatingReminder,
+      isError: isCreatingReminderError,
+      isSuccess: isCreatingReminderSuccess,
+    },
+  ] = useCreateReminderMutation();
+
   console.log(selectedAppointmentId, appointmentById);
+
   const filteredAppointments = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return data || [];
-    if (!data) return [];
-
-    console.log("Filtering appointments with query:", query);
-
-    return data.filter((appointment) => {
-      return (
-        appointment.name.toLowerCase().includes(query) ||
-        String(appointment.id).includes(query)
-      );
-    });
+    const source = data ? [...data] : []; // spread to unfreeze
+    const filtered = query
+      ? source.filter(
+          (a) =>
+            a.name.toLowerCase().includes(query) ||
+            String(a.id).includes(query),
+        )
+      : source;
+    return filtered.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   }, [data, search]);
 
   const totalAppointments = data?.length ?? 0;
@@ -84,9 +98,32 @@ export default function AppointmentsPage() {
     (appointment) => String(appointment.status).toUpperCase() === "CANCELED",
   ).length;
 
-  const handleCreateSuccess = (newAppointment: Appointment) => {
+  const prevDataLengthRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const prevLength = prevDataLengthRef.current;
+    const newLength = data?.length;
+    if (
+      prevLength !== undefined &&
+      newLength !== undefined &&
+      newLength > prevLength
+    ) {
+      const row = ref.current;
+      row?.classList.remove("animate-highlight");
+      void row?.offsetHeight; // force reflow
+      row?.classList.add("animate-highlight");
+      row?.addEventListener(
+        "animationend",
+        () => row.classList.remove("animate-highlight"),
+        { once: true },
+      );
+    }
+    prevDataLengthRef.current = newLength;
+  }, [data, filteredAppointments, ref]);
+
+  const handleCreateSuccess = async (newAppointment: Appointment) => {
     void newAppointment;
-    void refetch();
+    await refetch();
     setFormError(null);
   };
 
@@ -123,28 +160,48 @@ export default function AppointmentsPage() {
     }
   }
 
-  async function handleSendReminder(appointmentId: number) {
+  async function handleSendReminder(
+    appointmentId: number,
+    message: string = "MESSAGE",
+  ) {
+    // open up reminder message modal
     const confirmed = window.confirm(
       "Do you want to send a reminder to the patient in this appointment?",
     );
+
     if (!confirmed) return;
 
+    console.log(appointmentId);
+
     try {
-      window.alert(
-        "reminder sent to patient: " +
-          data?.find((appointment) => appointment.id === appointmentId)
-            ?.patientId,
+      const appointment = data?.find(
+        (appointment) => appointment.id === appointmentId,
       );
+
+      if (!appointment) throw new Error("Appointment does not exist");
+
+      const reminderDto = {
+        appointmentId: appointment.id,
+        patientId: appointment.patientId,
+        message,
+      };
+
+      const response = await createReminder(reminderDto).unwrap();
+
+      if (response) {
+        void refetch();
+      } else {
+      }
     } catch (error) {
       const message =
         error && typeof error === "object" && "data" in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
-          : "Failed to delete appointment";
+          : "Failed to create reminder";
       setFormError(message);
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isCreatingReminder) {
     return (
       <AppShell>
         <h1 className="text-2xl font-semibold">Appointments</h1>
@@ -164,6 +221,14 @@ export default function AppointmentsPage() {
         </p>
       </AppShell>
     );
+  }
+
+  if (isCreatingReminderError) {
+    window.alert("error while trying to create a reminder");
+  }
+
+  if (isCreatingReminderSuccess) {
+    window.alert("reminder created and sent!");
   }
 
   return (
@@ -297,6 +362,7 @@ export default function AppointmentsPage() {
                 </div>
               ) : (
                 <ObjectsTable
+                  firstElementRef={ref}
                   data={filteredAppointments}
                   fieldTranslations={{
                     id: "ID",

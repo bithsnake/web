@@ -10,10 +10,12 @@ type ElipsisHamburgerMenuProps<
     actionLabel?: string | ((row: T) => string) | null;
     isActionDisabled?: ((row: T) => boolean) | null;
   }[];
+  row: T;
 };
 
 export function ElipsisHamburger<T extends Record<string, unknown>>({
   onActions,
+  row,
 }: ElipsisHamburgerMenuProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +50,7 @@ export function ElipsisHamburger<T extends Record<string, unknown>>({
     event.preventDefault();
     if (!onAction) return;
 
-    onAction({} as T);
+    onAction(row);
     setIsOpen(false);
   }
 
@@ -78,7 +80,7 @@ export function ElipsisHamburger<T extends Record<string, unknown>>({
               <div
                 key={
                   typeof actionLabel === "function"
-                    ? actionLabel({} as T) || `no-label-${index}`
+                    ? actionLabel(row) || `no-label-${index}`
                     : actionLabel || `no-label-${index}`
                 }
               >
@@ -86,13 +88,11 @@ export function ElipsisHamburger<T extends Record<string, unknown>>({
                   type="button"
                   role="menuitem"
                   onClick={(event) => onHandleSetShow(event, onAction)}
-                  disabled={
-                    isActionDisabled ? isActionDisabled({} as T) : false
-                  }
+                  disabled={isActionDisabled ? isActionDisabled(row) : false}
                   className="w-full px-4 py-2.5 text-center text-md font-semibold transition-all duration-200 ease-out hover:bg-(--line) hover:text-[--brand] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {typeof actionLabel === "function"
-                    ? actionLabel({} as T) || `No label-${index}`
+                    ? actionLabel(row) || `No label-${index}`
                     : actionLabel || `No label-${index}`}
                 </button>
               </div>

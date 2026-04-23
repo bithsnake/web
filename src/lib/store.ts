@@ -6,6 +6,7 @@ import { appointmentsApi } from "./features/appointments-api";
 import billingsUiReducer from "./features/billings-ui-slice";
 import { billingsApi } from "./features/billings-api";
 import dashboardApi from "./features/dashboard-api";
+import { remindersApi } from "./features/reminders-api";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     billingsUi: billingsUiReducer,
     [billingsApi.reducerPath]: billingsApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [remindersApi.reducerPath]: remindersApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -23,6 +25,7 @@ export const store = configureStore({
       appointmentsApi.middleware,
       billingsApi.middleware,
       dashboardApi.middleware,
+      remindersApi.middleware,
     ),
 });
 

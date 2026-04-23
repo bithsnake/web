@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { FieldTranslations } from "@/lib/types";
 import { StatusTag, formatStatusLabel, getStatusTone } from "./status-tag";
 import { TypeTag } from "./type-tag";
-import { BrandButton } from "./brand-button";
+// import { BrandButton } from "./brand-button";
 import { ElipsisHamburger } from "./elipsis-hamburger";
 
 type ObjectsTableProps<T extends Record<string, unknown>> = {
@@ -16,6 +16,8 @@ type ObjectsTableProps<T extends Record<string, unknown>> = {
     actionLabel?: string | ((row: T) => string);
     isActionDisabled?: (row: T) => boolean;
   }[];
+  firstElementRef?: React.Ref<HTMLTableRowElement> | undefined;
+  lastElementRef?: React.Ref<HTMLTableRowElement> | undefined;
 };
 
 type SortDirection = "asc" | "desc";
@@ -115,6 +117,8 @@ export function ObjectsTable<T extends Record<string, unknown>>({
   typeColorMap,
   onRowClick,
   onActions,
+  lastElementRef,
+  firstElementRef,
 }: ObjectsTableProps<T>) {
   const [sortState, setSortState] = useState<SortState>(null);
 
@@ -206,6 +210,13 @@ export function ObjectsTable<T extends Record<string, unknown>>({
       <tbody>
         {sortedData.map((row, index) => (
           <tr
+            ref={
+              index === 0
+                ? firstElementRef
+                : index === data.length - 1
+                  ? lastElementRef
+                  : undefined
+            }
             key={String(row.id ?? index)}
             className={[
               "border-t border-(--line) transition-colors hover:bg-(--line)/45",
@@ -223,7 +234,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
                 onClick={(e) => e.stopPropagation()}
                 className="px-4 py-3 flex gap-4"
               >
-                <ElipsisHamburger key={index} onActions={onActions} />
+                <ElipsisHamburger key={index} onActions={onActions} row={row} />
               </td>
             ) : null}
           </tr>

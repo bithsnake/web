@@ -65,6 +65,7 @@ export type Appointment = {
   date: Date;
   createdAt: Date;
   updatedAt: Date;
+  lastRemindedAt?: string | null;
 };
 
 export type CreateAppointmentRequest = {

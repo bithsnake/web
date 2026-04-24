@@ -83,8 +83,6 @@ export default function DashBoardPage() {
     });
   };
 
-  console.log(data, error);
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -123,7 +121,7 @@ export default function DashBoardPage() {
                 {visibleWidgetIdSet.has("upcoming-appointments") ? (
                   <WidgetShell label="Upcoming Appointments" width="100%">
                     <CardTable
-                      columns={["Name", "Type", "Date"]}
+                      columns={["Name", "Type", "Date", "Last Reminded At"]}
                       data={appointMentWidgetItem.upcoming.map(
                         (appointment) => ({
                           Name: appointment.name,
@@ -131,6 +129,11 @@ export default function DashBoardPage() {
                           Date: new Date(
                             appointment.createdAt,
                           ).toLocaleDateString(),
+                          "Last Reminded At": appointment.lastRemindedAt
+                            ? new Date(
+                                appointment.lastRemindedAt,
+                              ).toLocaleDateString()
+                            : "N/A",
                         }),
                       )}
                     />

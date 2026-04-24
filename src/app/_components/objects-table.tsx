@@ -7,7 +7,7 @@ import { ElipsisHamburger } from "./elipsis-hamburger";
 
 type ObjectsTableProps<T extends Record<string, unknown>> = {
   data: T[] | null | undefined;
-  fieldTranslations?: FieldTranslations;
+  fieldTranslationsInOrder?: FieldTranslations;
   emptyText?: string;
   typeColorMap?: Record<string, string>;
   onRowClick?: (row: T) => void;
@@ -112,7 +112,7 @@ function compareUnknownValues(a: unknown, b: unknown): number {
 
 export function ObjectsTable<T extends Record<string, unknown>>({
   data,
-  fieldTranslations,
+  fieldTranslationsInOrder,
   emptyText = "No data available.",
   typeColorMap,
   onRowClick,
@@ -129,19 +129,20 @@ export function ObjectsTable<T extends Record<string, unknown>>({
 
     const dataKeys = Object.keys(data[0]);
 
-    if (!fieldTranslations) {
+    if (!fieldTranslationsInOrder) {
       return dataKeys;
     }
 
-    const translationOrderedKeys = Object.keys(fieldTranslations).filter(
+    const translationOrderedKeys = Object.keys(fieldTranslationsInOrder).filter(
       (key) => dataKeys.includes(key),
     );
-    const remainingDataKeys = dataKeys.filter(
-      (key) => !translationOrderedKeys.includes(key),
-    );
 
-    return [...translationOrderedKeys, ...remainingDataKeys];
-  }, [data, fieldTranslations]);
+    // const remainingDataKeys = dataKeys.filter(
+    //   (key) => !translationOrderedKeys.includes(key),
+    // );
+
+    return translationOrderedKeys;
+  }, [data, fieldTranslationsInOrder]);
 
   const sortedData = useMemo(() => {
     if (!sortState || !data || data.length === 0) {
@@ -187,7 +188,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
                 className="inline-flex items-center gap-1 text-left hover:cursor-pointer"
                 onClick={() => handleColumnSort(key)}
               >
-                <span>{fieldTranslations?.[key] ?? key}</span>
+                <span>{fieldTranslationsInOrder?.[key] ?? key}</span>
                 {sortState?.key === key ? (
                   <span aria-hidden="true">
                     {sortState.direction === "asc" ? "▲" : "▼"}

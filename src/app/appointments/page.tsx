@@ -20,7 +20,7 @@ import {
 } from "@/lib/features/appointments-ui-slice";
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { CreateAppointmentForm } from "../_components/forms/create-appointment-form";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, use } from "react";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/quick-create-panel";
 import { BrandButton } from "../_components/buttons/brand-button";
@@ -68,8 +68,6 @@ export default function AppointmentsPage() {
       isSuccess: isCreatingReminderSuccess,
     },
   ] = useCreateReminderMutation();
-
-  console.log(selectedAppointmentId, appointmentById);
 
   const filteredAppointments = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -170,8 +168,6 @@ export default function AppointmentsPage() {
     );
 
     if (!confirmed) return;
-
-    console.log(appointmentId);
 
     try {
       const appointment = data?.find(
@@ -364,7 +360,7 @@ export default function AppointmentsPage() {
                 <ObjectsTable
                   firstElementRef={ref}
                   data={filteredAppointments}
-                  fieldTranslations={{
+                  fieldTranslationsInOrder={{
                     id: "ID",
                     name: "Name",
                     patientId: "Patient ID",
@@ -374,6 +370,7 @@ export default function AppointmentsPage() {
                     updatedAt: "Updated At",
                     type: "Type",
                     status: "Status",
+                    lastRemindedAt: "Last Reminded At",
                   }}
                   typeColorMap={APPOINTMENT_TYPE_COLOR_TONE_MAP}
                   onRowClick={(appointment) =>

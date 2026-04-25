@@ -21,7 +21,7 @@ import {
 
 import { BILLING_STATUS } from "@/lib/types";
 import { ObjectsTable } from "../_components/objects-table";
-import { QuickCreatePanel } from "../_components/quick-create-panel";
+import { QuickCreatePanel } from "../_components/panels/quick-create-panel";
 import { BrandButton } from "../_components/buttons/brand-button";
 
 export default function BillingsPage() {

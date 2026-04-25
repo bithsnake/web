@@ -5,7 +5,7 @@ import "./globals.css";
 import { AppProviders } from "./_components/app-providers";
 
 import { config } from "@fortawesome/fontawesome-svg-core";
-config.autoAddCss = true;
+config.autoAddCss = false;
 
 const geist = Geist({ variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono" });

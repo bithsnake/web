@@ -1,36 +1,32 @@
-"use client";
+'use client';
 
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import {
-  Appointment,
-  APPOINTMENT_OBJ_MAP,
-  APPOINTMENT_TYPE_COLOR_TONE_MAP,
-} from "@/lib/types";
-import { AppShell } from "../_components/shells/app-shell";
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { Appointment, APPOINTMENT_OBJ_MAP, APPOINTMENT_TYPE_COLOR_TONE_MAP } from '@/lib/types';
+import { AppShell } from '../_components/shells/app-shell';
 import {
   useGetAppointmentByIdQuery,
   useGetAppointmentsQuery,
   useSoftDeleteAppointmentMutation,
-} from "@/lib/features/appointments-api";
+} from '@/lib/features/appointments-api';
 import {
   clearSearch,
   clearSelectedAppointmentId,
   setSearch,
   setSelectedAppointmentId,
-} from "@/lib/features/appointments-ui-slice";
-import { ObjectDetailsTable } from "../_components/object-details-table";
-import { CreateAppointmentForm } from "../_components/forms/create-appointment-form";
-import { useState, useMemo, useEffect, useRef, use } from "react";
-import { ObjectsTable } from "../_components/objects-table";
-import { QuickCreatePanel } from "../_components/quick-create-panel";
-import { BrandButton } from "../_components/buttons/brand-button";
-import { useCreateReminderMutation } from "@/lib/features/reminders-api";
-import { useScrollToRef } from "../shared/hooks";
+} from '@/lib/features/appointments-ui-slice';
+import { ObjectDetailsTable } from '../_components/object-details-table';
+import { CreateAppointmentForm } from '../_components/forms/create-appointment-form';
+import { useState, useMemo, useEffect, useRef, use } from 'react';
+import { ObjectsTable } from '../_components/objects-table';
+import { QuickCreatePanel } from '../_components/panels/quick-create-panel';
+import { BrandButton } from '../_components/buttons/brand-button';
+import { useCreateReminderMutation } from '@/lib/features/reminders-api';
+import { useScrollToRef } from '../shared/hooks';
+import { CardModal } from '../_components/card-modal';
+import { CardModalFooter } from '../_components/card-modal-footer';
 
 export default function AppointmentsPage() {
-  const appointmentObjMap: Record<string, string> = Object.entries(
-    APPOINTMENT_OBJ_MAP,
-  ).reduce(
+  const appointmentObjMap: Record<string, string> = Object.entries(APPOINTMENT_OBJ_MAP).reduce(
     (acc, [key, value]) => ({
       ...acc,
       [key]: value,
@@ -43,10 +39,15 @@ export default function AppointmentsPage() {
 
   const { data, isLoading, error, refetch } = useGetAppointmentsQuery();
   const [softDeleteAppointment] = useSoftDeleteAppointmentMutation();
-  const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<
-    number | null
-  >(null);
+  const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<number | null>(null);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState<{
+    appointmentId: number | null;
+    isOpen: boolean;
+    isClosed: boolean;
+  }>({ appointmentId: null, isOpen: false, isClosed: true });
   const [ref, scrollTo] = useScrollToRef<HTMLTableRowElement>();
+
+  const sendReminderModalRef = useRef<HTMLDivElement>(null);
 
   // search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
   const search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
@@ -54,11 +55,13 @@ export default function AppointmentsPage() {
     (state) => state.appointmentsUi.selectedAppointmentId,
   );
 
-  const { currentData: appointmentById, isFetching: isLoadingById } =
-    useGetAppointmentByIdQuery(selectedAppointmentId ?? 0, {
+  const { currentData: appointmentById, isFetching: isLoadingById } = useGetAppointmentByIdQuery(
+    selectedAppointmentId ?? 0,
+    {
       skip: selectedAppointmentId === null,
       refetchOnMountOrArgChange: true,
-    });
+    },
+  );
 
   const [
     createReminder,
@@ -73,27 +76,22 @@ export default function AppointmentsPage() {
     const query = search.trim().toLowerCase();
     const source = data ? [...data] : []; // spread to unfreeze
     const filtered = query
-      ? source.filter(
-          (a) =>
-            a.name.toLowerCase().includes(query) ||
-            String(a.id).includes(query),
-        )
+      ? source.filter((a) => a.name.toLowerCase().includes(query) || String(a.id).includes(query))
       : source;
     return filtered.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [data, search]);
 
   const totalAppointments = data?.length ?? 0;
   const scheduledCount = (data ?? []).filter(
-    (appointment) => String(appointment.status).toUpperCase() === "SCHEDULED",
+    (appointment) => String(appointment.status).toUpperCase() === 'SCHEDULED',
   ).length;
   const completedCount = (data ?? []).filter(
-    (appointment) => String(appointment.status).toUpperCase() === "COMPLETED",
+    (appointment) => String(appointment.status).toUpperCase() === 'COMPLETED',
   ).length;
   const canceledCount = (data ?? []).filter(
-    (appointment) => String(appointment.status).toUpperCase() === "CANCELED",
+    (appointment) => String(appointment.status).toUpperCase() === 'CANCELED',
   ).length;
 
   const prevDataLengthRef = useRef<number | undefined>(undefined);
@@ -101,20 +99,14 @@ export default function AppointmentsPage() {
   useEffect(() => {
     const prevLength = prevDataLengthRef.current;
     const newLength = data?.length;
-    if (
-      prevLength !== undefined &&
-      newLength !== undefined &&
-      newLength > prevLength
-    ) {
+    if (prevLength !== undefined && newLength !== undefined && newLength > prevLength) {
       const row = ref.current;
-      row?.classList.remove("animate-highlight");
+      row?.classList.remove('animate-highlight');
       void row?.offsetHeight; // force reflow
-      row?.classList.add("animate-highlight");
-      row?.addEventListener(
-        "animationend",
-        () => row.classList.remove("animate-highlight"),
-        { once: true },
-      );
+      row?.classList.add('animate-highlight');
+      row?.addEventListener('animationend', () => row.classList.remove('animate-highlight'), {
+        once: true,
+      });
     }
     prevDataLengthRef.current = newLength;
   }, [data, filteredAppointments, ref]);
@@ -134,9 +126,7 @@ export default function AppointmentsPage() {
   }
 
   async function handleSoftDeleteClick(appointmentId: number) {
-    const confirmed = window.confirm(
-      "Delete this appointment? This action cannot be undone.",
-    );
+    const confirmed = window.confirm('Delete this appointment? This action cannot be undone.');
     if (!confirmed) return;
     setFormError(null);
 
@@ -149,32 +139,32 @@ export default function AppointmentsPage() {
       }
     } catch (error) {
       const message =
-        error && typeof error === "object" && "data" in error
+        error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
-          : "Failed to delete appointment";
+          : 'Failed to delete appointment';
       setFormError(message);
     } finally {
       setCurrentlySoftDeletingId(null);
     }
   }
 
-  async function handleSendReminder(
-    appointmentId: number,
-    message: string = "MESSAGE",
-  ) {
-    // open up reminder message modal
-    const confirmed = window.confirm(
-      "Do you want to send a reminder to the patient in this appointment?",
-    );
-
-    if (!confirmed) return;
+  async function handleSendReminder(appointmentId: number | null, message: string = 'MESSAGE') {
+    if (appointmentId === null) return;
+    console.log(sendReminderModalRef);
 
     try {
-      const appointment = data?.find(
-        (appointment) => appointment.id === appointmentId,
-      );
+      const appointment = data?.find((appointment) => appointment.id === appointmentId);
 
-      if (!appointment) throw new Error("Appointment does not exist");
+      if (
+        !appointment ||
+        appointment.status === 'Canceled' ||
+        appointment.status === 'Completed' ||
+        appointment.status === 'Deleted'
+      ) {
+        // show snackbar that it is not possible to send a reminder for this appointment
+
+        return;
+      }
 
       const reminderDto = {
         appointmentId: appointment.id,
@@ -185,16 +175,25 @@ export default function AppointmentsPage() {
       const response = await createReminder(reminderDto).unwrap();
 
       if (response) {
+        // show success snackbar
+
         void refetch();
-      } else {
       }
     } catch (error) {
       const message =
-        error && typeof error === "object" && "data" in error
+        error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
-          : "Failed to create reminder";
+          : 'Failed to create reminder';
       setFormError(message);
     }
+  }
+
+  function handleCloseSendReminderModal() {
+    setIsReminderModalOpen({
+      ...isReminderModalOpen,
+      appointmentId: null,
+      isOpen: false,
+    });
   }
 
   if (isLoading || isCreatingReminder) {
@@ -212,19 +211,15 @@ export default function AppointmentsPage() {
       <AppShell>
         <h1 className="text-2xl font-semibold">Appointments</h1>
         <p className="mt-2 text-sm text-(--muted)">
-          An error occurred while fetching appointments:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
+          An error occurred while fetching appointments:{' '}
+          {error instanceof Error ? error.message : 'Unknown error'}
         </p>
       </AppShell>
     );
   }
 
   if (isCreatingReminderError) {
-    window.alert("error while trying to create a reminder");
-  }
-
-  if (isCreatingReminderSuccess) {
-    window.alert("reminder created and sent!");
+    window.alert('error while trying to create a reminder');
   }
 
   return (
@@ -234,40 +229,28 @@ export default function AppointmentsPage() {
         <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-(--brand)/10 blur-2xl" />
 
         <div className="relative">
-          <p className="text-xs uppercase tracking-[0.2em] text-(--muted)">
-            Clinic Operations
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold leading-tight md:text-4xl">
-            Appointments
-          </h1>
+          <p className="text-xs uppercase tracking-[0.2em] text-(--muted)">Clinic Operations</p>
+          <h1 className="mt-2 text-3xl font-semibold leading-tight md:text-4xl">Appointments</h1>
           <p className="mt-2 max-w-2xl text-sm text-(--muted)">
-            Manage scheduling, check live status distribution, and inspect
-            details quickly from one surface.
+            Manage scheduling, check live status distribution, and inspect details quickly from one
+            surface.
           </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-wide text-(--muted)">
-                Total
-              </p>
+              <p className="text-xs uppercase tracking-wide text-(--muted)">Total</p>
               <p className="mt-1 text-xl font-semibold">{totalAppointments}</p>
             </div>
             <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-wide text-(--muted)">
-                Scheduled
-              </p>
+              <p className="text-xs uppercase tracking-wide text-(--muted)">Scheduled</p>
               <p className="mt-1 text-xl font-semibold">{scheduledCount}</p>
             </div>
             <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-wide text-(--muted)">
-                Completed
-              </p>
+              <p className="text-xs uppercase tracking-wide text-(--muted)">Completed</p>
               <p className="mt-1 text-xl font-semibold">{completedCount}</p>
             </div>
             <div className="rounded-xl border border-(--line) bg-white/70 p-3 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-wide text-(--muted)">
-                Canceled
-              </p>
+              <p className="text-xs uppercase tracking-wide text-(--muted)">Canceled</p>
               <p className="mt-1 text-xl font-semibold">{canceledCount}</p>
             </div>
           </div>
@@ -276,10 +259,7 @@ export default function AppointmentsPage() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[auto_minmax(0,1fr)]">
         <QuickCreatePanel>
-          <CreateAppointmentForm
-            onSuccess={handleCreateSuccess}
-            onError={handleCreateError}
-          />
+          <CreateAppointmentForm onSuccess={handleCreateSuccess} onError={handleCreateError} />
           {formError && (
             <p className="mt-3 rounded-md border border-(--warn)/30 bg-(--warn)/10 px-3 py-2 text-sm text-(--warn)">
               Error: {formError}
@@ -305,10 +285,7 @@ export default function AppointmentsPage() {
                 >
                   Clear
                 </BrandButton>
-                <BrandButton
-                  onClick={() => void refetch()}
-                  className="px-3 py-2"
-                >
+                <BrandButton onClick={() => void refetch()} className="px-3 py-2">
                   Refresh
                 </BrandButton>
               </div>
@@ -324,9 +301,7 @@ export default function AppointmentsPage() {
               {selectedAppointmentId ? (
                 <div className="p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-base font-semibold">
-                      Appointment Details
-                    </h3>
+                    <h3 className="text-base font-semibold">Appointment Details</h3>
                     <BrandButton
                       onClick={() => dispatch(clearSelectedAppointmentId())}
                       variant="alternate"
@@ -339,9 +314,7 @@ export default function AppointmentsPage() {
                   {isLoadingById ? (
                     <div className="flex flex-col items-center justify-center py-6">
                       <span className="spinner "></span>
-                      <p className="mt-2 text-sm text-(--muted)">
-                        Loading appointment data...
-                      </p>
+                      <p className="mt-2 text-sm text-(--muted)">Loading appointment data...</p>
                     </div>
                   ) : appointmentById ? (
                     <ObjectDetailsTable
@@ -361,40 +334,39 @@ export default function AppointmentsPage() {
                   firstElementRef={ref}
                   data={filteredAppointments}
                   fieldTranslationsInOrder={{
-                    id: "ID",
-                    name: "Name",
-                    patientId: "Patient ID",
-                    userId: "Dentist ID",
-                    date: "Appointment Date",
-                    createdAt: "Created At",
-                    updatedAt: "Updated At",
-                    type: "Type",
-                    status: "Status",
-                    lastRemindedAt: "Last Reminded At",
+                    id: 'ID',
+                    name: 'Name',
+                    patientId: 'Patient ID',
+                    userId: 'Dentist ID',
+                    date: 'Appointment Date',
+                    createdAt: 'Created At',
+                    updatedAt: 'Updated At',
+                    type: 'Type',
+                    status: 'Status',
+                    lastRemindedAt: 'Last Reminded At',
                   }}
                   typeColorMap={APPOINTMENT_TYPE_COLOR_TONE_MAP}
-                  onRowClick={(appointment) =>
-                    dispatch(setSelectedAppointmentId(appointment.id))
-                  }
+                  onRowClick={(appointment) => dispatch(setSelectedAppointmentId(appointment.id))}
                   onActions={[
                     {
-                      onAction: (appointment) =>
-                        void handleSoftDeleteClick(appointment.id),
+                      onAction: (appointment) => void handleSoftDeleteClick(appointment.id),
                       actionLabel: (appointment) =>
-                        isRowSoftDeleting(appointment.id)
-                          ? "Deleting..."
-                          : "Delete",
-                      isActionDisabled: (appointment) =>
-                        isRowSoftDeleting(appointment.id),
+                        isRowSoftDeleting(appointment.id) ? 'Deleting...' : 'Delete',
+                      isActionDisabled: (appointment) => isRowSoftDeleting(appointment.id),
                     },
                     {
                       onAction: (appointment) =>
-                        void handleSendReminder(appointment.id),
-                      actionLabel: "Send Reminder",
+                        void setIsReminderModalOpen({
+                          ...isReminderModalOpen,
+                          appointmentId: appointment?.id,
+                          isOpen: true,
+                          isClosed: false,
+                        }),
+                      actionLabel: 'Send Reminder',
                       isActionDisabled: (appointment) =>
                         isRowSoftDeleting(appointment.id) ||
-                        void appointment.status === "CANCELED" ||
-                        void appointment.status === "COMPLETED",
+                        void appointment.status === 'CANCELED' ||
+                        void appointment.status === 'COMPLETED',
                       // we need to get reminders for this apointment to be ablet o to know if we can send a reminder or not, but for now let's just disable the button if the appointment is not scheduled
                     },
                   ]}
@@ -404,6 +376,37 @@ export default function AppointmentsPage() {
           )}
         </section>
       </div>
+      <>
+        {isReminderModalOpen.isOpen && (
+          <CardModal
+            modalRef={sendReminderModalRef ?? null}
+            isOpen={isReminderModalOpen.isOpen}
+            onClose={() => handleCloseSendReminderModal()}
+            title="Send Reminder"
+          >
+            <p className="mb-4 text-sm text-(--muted)">
+              Are you sure you want to send a reminder for this appointment?
+            </p>
+
+            <CardModalFooter>
+              <BrandButton
+                onClick={() => handleCloseSendReminderModal()}
+                variant="alternate"
+                className="px-3 py-1"
+              >
+                Cancel
+              </BrandButton>
+              <BrandButton
+                onClick={() => handleSendReminder(isReminderModalOpen.appointmentId ?? null)}
+                variant="primary"
+                className="px-3 py-1"
+              >
+                Send Reminder
+              </BrandButton>
+            </CardModalFooter>
+          </CardModal>
+        )}
+      </>
     </AppShell>
   );
 }

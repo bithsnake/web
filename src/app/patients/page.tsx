@@ -18,7 +18,7 @@ import {
 } from "@/lib/features/patients-api";
 import { ObjectDetailsTable } from "../_components/object-details-table";
 import { ObjectsTable } from "../_components/objects-table";
-import { QuickCreatePanel } from "../_components/quick-create-panel";
+import { QuickCreatePanel } from "../_components/panels/quick-create-panel";
 import { BrandButton } from "../_components/buttons/brand-button";
 
 export default function PatientsPage() {

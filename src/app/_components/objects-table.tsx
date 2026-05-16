@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
-import { FieldTranslations } from "@/lib/types";
-import { StatusTag, formatStatusLabel, getStatusTone } from "./tags/status-tag";
-import { TypeTag } from "./tags/type-tag";
+import { useMemo, useState } from 'react';
+import { FieldTranslations } from '@/lib/types';
+import { StatusTag, formatStatusLabel, getStatusTone } from './tags/status-tag';
+import { TypeTag } from './tags/type-tag';
 // import { BrandButton } from "./brand-button";
-import { ElipsisHamburger } from "./elipsis-hamburger";
+import { ElipsisHamburger } from './elipsis-hamburger';
 
 type ObjectsTableProps<T extends Record<string, unknown>> = {
   data: T[] | null | undefined;
@@ -20,7 +20,7 @@ type ObjectsTableProps<T extends Record<string, unknown>> = {
   lastElementRef?: React.Ref<HTMLTableRowElement> | undefined;
 };
 
-type SortDirection = "asc" | "desc";
+type SortDirection = 'asc' | 'desc';
 
 type SortState = {
   key: string;
@@ -29,10 +29,10 @@ type SortState = {
 
 function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) {
-    return "-";
+    return '-';
   }
 
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     return JSON.stringify(value);
   }
 
@@ -44,13 +44,11 @@ function renderCellValue(
   value: unknown,
   typeColorMap?: Record<string, string>,
 ): React.ReactNode {
-  if (key === "status" && typeof value === "string") {
-    return (
-      <StatusTag label={formatStatusLabel(value)} tone={getStatusTone(value)} />
-    );
+  if (key === 'status' && typeof value === 'string') {
+    return <StatusTag label={formatStatusLabel(value)} tone={getStatusTone(value)} />;
   }
 
-  if (key === "type" && typeof value === "string" && typeColorMap) {
+  if (key === 'type' && typeof value === 'string' && typeColorMap) {
     return <TypeTag typeValue={value} colorMap={typeColorMap} />;
   }
 
@@ -76,11 +74,11 @@ function compareUnknownValues(a: unknown, b: unknown): number {
     return a.getTime() - b.getTime();
   }
 
-  if (typeof a === "number" && typeof b === "number") {
+  if (typeof a === 'number' && typeof b === 'number') {
     return a - b;
   }
 
-  if (typeof a === "string" && typeof b === "string") {
+  if (typeof a === 'string' && typeof b === 'string') {
     const parsedDateA = tryParseDate(a);
     const parsedDateB = tryParseDate(b);
     if (parsedDateA !== null && parsedDateB !== null) {
@@ -95,13 +93,9 @@ function compareUnknownValues(a: unknown, b: unknown): number {
 
     const normalizedA = a.toLowerCase();
     const normalizedB = b.toLowerCase();
-    const firstCharCompare = normalizedA
-      .charAt(0)
-      .localeCompare(normalizedB.charAt(0));
+    const firstCharCompare = normalizedA.charAt(0).localeCompare(normalizedB.charAt(0));
 
-    return firstCharCompare !== 0
-      ? firstCharCompare
-      : normalizedA.localeCompare(normalizedB);
+    return firstCharCompare !== 0 ? firstCharCompare : normalizedA.localeCompare(normalizedB);
   }
 
   const normalizedA = formatCellValue(a).toLowerCase();
@@ -113,7 +107,7 @@ function compareUnknownValues(a: unknown, b: unknown): number {
 export function ObjectsTable<T extends Record<string, unknown>>({
   data,
   fieldTranslationsInOrder,
-  emptyText = "No data available.",
+  emptyText = 'No data available.',
   typeColorMap,
   onRowClick,
   onActions,
@@ -133,8 +127,8 @@ export function ObjectsTable<T extends Record<string, unknown>>({
       return dataKeys;
     }
 
-    const translationOrderedKeys = Object.keys(fieldTranslationsInOrder).filter(
-      (key) => dataKeys.includes(key),
+    const translationOrderedKeys = Object.keys(fieldTranslationsInOrder).filter((key) =>
+      dataKeys.includes(key),
     );
 
     // const remainingDataKeys = dataKeys.filter(
@@ -153,7 +147,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
       compareUnknownValues(rowA[sortState.key], rowB[sortState.key]),
     );
 
-    if (sortState.direction === "desc") {
+    if (sortState.direction === 'desc') {
       sorted.reverse();
     }
 
@@ -163,12 +157,12 @@ export function ObjectsTable<T extends Record<string, unknown>>({
   const handleColumnSort = (columnKey: string) => {
     setSortState((currentSort) => {
       if (!currentSort || currentSort.key !== columnKey) {
-        return { key: columnKey, direction: "asc" };
+        return { key: columnKey, direction: 'asc' };
       }
 
       return {
         key: columnKey,
-        direction: currentSort.direction === "asc" ? "desc" : "asc",
+        direction: currentSort.direction === 'asc' ? 'desc' : 'asc',
       };
     });
   };
@@ -190,9 +184,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
               >
                 <span>{fieldTranslationsInOrder?.[key] ?? key}</span>
                 {sortState?.key === key ? (
-                  <span aria-hidden="true">
-                    {sortState.direction === "asc" ? "▲" : "▼"}
-                  </span>
+                  <span aria-hidden="true">{sortState.direction === 'asc' ? '▲' : '▼'}</span>
                 ) : (
                   <span aria-hidden="true" className="opacity-40">
                     ↕
@@ -202,9 +194,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
             </th>
           ))}
           {onActions ? (
-            <th className="px-4 py-3 text-left text-xs tracking-wide">
-              Actions
-            </th>
+            <th className="px-4 py-3 text-left text-xs tracking-wide">Actions</th>
           ) : null}
         </tr>
       </thead>
@@ -212,17 +202,13 @@ export function ObjectsTable<T extends Record<string, unknown>>({
         {sortedData.map((row, index) => (
           <tr
             ref={
-              index === 0
-                ? firstElementRef
-                : index === data.length - 1
-                  ? lastElementRef
-                  : undefined
+              index === 0 ? firstElementRef : index === data.length - 1 ? lastElementRef : undefined
             }
             key={String(row.id ?? index)}
             className={[
-              "border-t border-(--line) transition-colors hover:bg-(--line)/45",
-              onRowClick ? "hover:cursor-pointer" : "",
-            ].join(" ")}
+              'border-t border-(--line) transition-colors hover:bg-(--line)/45',
+              onRowClick ? 'hover:cursor-pointer' : '',
+            ].join(' ')}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
           >
             {columns.map((key) => (
@@ -231,10 +217,7 @@ export function ObjectsTable<T extends Record<string, unknown>>({
               </td>
             ))}
             {onActions ? (
-              <td
-                onClick={(e) => e.stopPropagation()}
-                className="px-4 py-3 flex gap-4"
-              >
+              <td onClick={(e) => e.stopPropagation()} className="px-4 py-3 flex gap-4">
                 <ElipsisHamburger key={index} onActions={onActions} row={row} />
               </td>
             ) : null}

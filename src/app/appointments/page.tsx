@@ -16,7 +16,7 @@ import {
 } from '@/lib/features/appointments-ui-slice';
 import { ObjectDetailsTable } from '../_components/object-details-table';
 import { CreateAppointmentForm } from '../_components/forms/create-appointment-form';
-import { useState, useMemo, useEffect, useRef, use } from 'react';
+import { useState, useMemo, useEffect, useRef, use, useContext } from 'react';
 import { ObjectsTable } from '../_components/objects-table';
 import { QuickCreatePanel } from '../_components/panels/quick-create-panel';
 import { BrandButton } from '../_components/buttons/brand-button';
@@ -24,8 +24,15 @@ import { useCreateReminderMutation } from '@/lib/features/reminders-api';
 import { useScrollToRef } from '../shared/hooks';
 import { CardModal } from '../_components/card-modal';
 import { CardModalFooter } from '../_components/card-modal-footer';
+import SnackBarContext from '../contexts/snackbar-context';
+
+const TEMP_LOGGED_IN_USER = {
+  id: 1,
+  name: 'Dr. Smith',
+};
 
 export default function AppointmentsPage() {
+  const snackBarContext = useContext(SnackBarContext);
   const appointmentObjMap: Record<string, string> = Object.entries(APPOINTMENT_OBJ_MAP).reduce(
     (acc, [key, value]) => ({
       ...acc,
@@ -34,6 +41,7 @@ export default function AppointmentsPage() {
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [reminderMessage, setReminderMessage] = useState<string>(''); // New state for reminder message
 
   const dispatch = useAppDispatch();
 
@@ -45,9 +53,15 @@ export default function AppointmentsPage() {
     isOpen: boolean;
     isClosed: boolean;
   }>({ appointmentId: null, isOpen: false, isClosed: true });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<{
+    appointmentId: number | null;
+    isOpen: boolean;
+    isClosed: boolean;
+  }>({ appointmentId: null, isOpen: false, isClosed: true });
   const [ref, scrollTo] = useScrollToRef<HTMLTableRowElement>();
 
   const sendReminderModalRef = useRef<HTMLDivElement>(null);
+  const deleteModalRef = useRef<HTMLDivElement>(null);
 
   // search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
   const search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
@@ -68,7 +82,7 @@ export default function AppointmentsPage() {
     {
       isLoading: isCreatingReminder,
       isError: isCreatingReminderError,
-      isSuccess: isCreatingReminderSuccess,
+      // isSuccess: isCreatingReminderSuccess,
     },
   ] = useCreateReminderMutation();
 
@@ -126,26 +140,25 @@ export default function AppointmentsPage() {
   }
 
   async function handleSoftDeleteClick(appointmentId: number) {
-    const confirmed = window.confirm('Delete this appointment? This action cannot be undone.');
-    if (!confirmed) return;
     setFormError(null);
-
+    let success = false;
     try {
       setCurrentlySoftDeletingId(appointmentId);
       await softDeleteAppointment(appointmentId).unwrap();
-
-      if (selectedAppointmentId === appointmentId) {
-        dispatch(clearSelectedAppointmentId());
-      }
+      dispatch(clearSelectedAppointmentId());
+      success = true;
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to delete appointment';
       setFormError(message);
+      snackBarContext?.('error', message);
+      success = false;
     } finally {
       setCurrentlySoftDeletingId(null);
     }
+    return success;
   }
 
   async function handleSendReminder(appointmentId: number | null, message: string = 'MESSAGE') {
@@ -155,16 +168,14 @@ export default function AppointmentsPage() {
     try {
       const appointment = data?.find((appointment) => appointment.id === appointmentId);
 
-      if (
-        !appointment ||
-        appointment.status === 'Canceled' ||
-        appointment.status === 'Completed' ||
-        appointment.status === 'Deleted'
-      ) {
-        // show snackbar that it is not possible to send a reminder for this appointment
-
-        return;
+      if (!appointment || ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status)) {
+        throw new Error('Cannot send reminder for this appointment');
       }
+
+      const signature = `\n\nMvh, ${appointment.userId}\nDentis Team`; // Example signature
+
+      message = reminderMessage || message; // use the state value if available
+      message += signature; // append the signature to the message
 
       const reminderDto = {
         appointmentId: appointment.id,
@@ -176,7 +187,7 @@ export default function AppointmentsPage() {
 
       if (response) {
         // show success snackbar
-
+        snackBarContext?.('success', 'Reminder created successfully');
         void refetch();
       }
     } catch (error) {
@@ -185,18 +196,64 @@ export default function AppointmentsPage() {
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to create reminder';
       setFormError(message);
+      snackBarContext?.('error', message);
+    }
+  }
+
+  async function handleDeleteAppointment(
+    appointmentId: number | null,
+    message: string = 'MESSAGE',
+  ) {
+    if (appointmentId === null) return;
+
+    try {
+      const appointment = data?.find((appointment) => appointment.id === appointmentId);
+
+      if (!appointment || ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status)) {
+        throw new Error('Cannot delete this appointment');
+      }
+
+      const deleteDto = {
+        appointmentId: appointment.id,
+        patientId: appointment.patientId,
+        message,
+      };
+
+      const response = await handleSoftDeleteClick(deleteDto.appointmentId);
+
+      if (response) {
+        // show success snackbar
+        snackBarContext?.('success', 'Appointment deleted successfully');
+        void refetch();
+      }
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'data' in error
+          ? JSON.stringify((error as unknown as { data: unknown }).data)
+          : 'Failed to delete appointment';
+      setFormError(message);
+      snackBarContext?.('error', message);
     }
   }
 
   function handleCloseSendReminderModal() {
+    console.log('closing modal');
+
     setIsReminderModalOpen({
       ...isReminderModalOpen,
       appointmentId: null,
       isOpen: false,
     });
   }
+  function handleCloseDeleteModal() {
+    setIsDeleteModalOpen({
+      ...isDeleteModalOpen,
+      appointmentId: null,
+      isOpen: false,
+    });
+  }
 
-  if (isLoading || isCreatingReminder) {
+  if (isLoading && !isCreatingReminder) {
     return (
       <AppShell>
         <h1 className="text-2xl font-semibold">Appointments</h1>
@@ -337,7 +394,7 @@ export default function AppointmentsPage() {
                     id: 'ID',
                     name: 'Name',
                     patientId: 'Patient ID',
-                    userId: 'Dentist ID',
+                    userName: 'Dentist Name',
                     date: 'Appointment Date',
                     createdAt: 'Created At',
                     updatedAt: 'Updated At',
@@ -349,10 +406,18 @@ export default function AppointmentsPage() {
                   onRowClick={(appointment) => dispatch(setSelectedAppointmentId(appointment.id))}
                   onActions={[
                     {
-                      onAction: (appointment) => void handleSoftDeleteClick(appointment.id),
+                      onAction: (appointment) =>
+                        void setIsDeleteModalOpen({
+                          ...isDeleteModalOpen,
+                          appointmentId: appointment.id,
+                          isOpen: true,
+                          isClosed: false,
+                        }),
                       actionLabel: (appointment) =>
                         isRowSoftDeleting(appointment.id) ? 'Deleting...' : 'Delete',
-                      isActionDisabled: (appointment) => isRowSoftDeleting(appointment.id),
+                      isActionDisabled: (appointment) =>
+                        isRowSoftDeleting(appointment.id) ||
+                        ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status),
                     },
                     {
                       onAction: (appointment) =>
@@ -376,17 +441,57 @@ export default function AppointmentsPage() {
           )}
         </section>
       </div>
+      {/* MODALS */}
       <>
-        {isReminderModalOpen.isOpen && (
+        {isDeleteModalOpen.isOpen && !isDeleteModalOpen.isClosed && (
+          <CardModal
+            modalRef={deleteModalRef ?? null}
+            isOpen={isDeleteModalOpen.isOpen}
+            modalState={setIsDeleteModalOpen}
+            onClose={() => handleCloseDeleteModal()}
+            title="Delete Appointment"
+          >
+            <p className="mb-4 text-sm text-(--muted)">
+              Are you sure you want to delete this appointment?
+            </p>
+
+            <CardModalFooter>
+              <BrandButton
+                onClick={() => handleCloseDeleteModal()}
+                variant="alternate"
+                className="px-3 py-1"
+              >
+                Cancel
+              </BrandButton>
+              <BrandButton
+                onClick={() => handleDeleteAppointment(isDeleteModalOpen.appointmentId ?? null)}
+                variant="primary"
+                className="px-3 py-1"
+              >
+                Delete
+              </BrandButton>
+            </CardModalFooter>
+          </CardModal>
+        )}
+        ,
+        {isReminderModalOpen.isOpen && !isReminderModalOpen.isClosed && (
           <CardModal
             modalRef={sendReminderModalRef ?? null}
             isOpen={isReminderModalOpen.isOpen}
+            modalState={setIsReminderModalOpen}
             onClose={() => handleCloseSendReminderModal()}
             title="Send Reminder"
           >
-            <p className="mb-4 text-sm text-(--muted)">
-              Are you sure you want to send a reminder for this appointment?
-            </p>
+            <textarea
+              value={reminderMessage}
+              onChange={(e) => setReminderMessage(e.target.value)}
+              placeholder="Add reminder text"
+              name=""
+              id=""
+              cols={30}
+              rows={10}
+              className="w-full rounded-md border border-(--line) bg-white px-3 py-2 text-xl shadow-sm outline-none focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
+            ></textarea>
 
             <CardModalFooter>
               <BrandButton

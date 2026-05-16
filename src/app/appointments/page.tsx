@@ -22,6 +22,7 @@ import { QuickCreatePanel } from '../_components/panels/quick-create-panel';
 import { BrandButton } from '../_components/buttons/brand-button';
 import { useCreateReminderMutation } from '@/lib/features/reminders-api';
 import { useCreateMessageMutation } from '@/lib/features/messages-api';
+import { useGetPatientsQuery } from '@/lib/features/patients-api';
 import { useScrollToRef } from '../shared/hooks';
 import { CardModal } from '../_components/card-modal';
 import { CardModalFooter } from '../_components/card-modal-footer';
@@ -45,11 +46,13 @@ export default function AppointmentsPage() {
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [messageText, setMessageText] = useState<string>('');
+  const [messagePatientName, setMessagePatientName] = useState<string | null>(null);
   const [sendAsLoggedInUser, setSendAsLoggedInUser] = useState<boolean>(false);
 
   const dispatch = useAppDispatch();
 
   const { data, isLoading, error, refetch } = useGetAppointmentsQuery();
+  const { data: patientsData } = useGetPatientsQuery();
   const [softDeleteAppointment] = useSoftDeleteAppointmentMutation();
   const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<number | null>(null);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState<{
@@ -111,6 +114,23 @@ export default function AppointmentsPage() {
     );
   }, [data, search]);
 
+  const patientNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const patient of patientsData ?? []) {
+      map.set(patient.id, patient.name);
+    }
+    return map;
+  }, [patientsData]);
+
+  const filteredAppointmentsForTable = useMemo(
+    () =>
+      filteredAppointments.map((appointment) => ({
+        ...appointment,
+        patientName: appointment.patientName ?? patientNameById.get(appointment.patientId) ?? '-',
+      })),
+    [filteredAppointments, patientNameById],
+  );
+
   const totalAppointments = data?.length ?? 0;
   const scheduledCount = (data ?? []).filter(
     (appointment) => String(appointment.status).toUpperCase() === 'SCHEDULED',
@@ -153,7 +173,7 @@ export default function AppointmentsPage() {
     return currentlySoftDeletingId === appointmentId;
   }
 
-  async function handleSoftDeleteClick(appointmentId: number) {
+  async function handleSoftDeleteClick(appointmentId: number, appointmentName?: string) {
     setFormError(null);
     let success = false;
     try {
@@ -162,10 +182,13 @@ export default function AppointmentsPage() {
       dispatch(clearSelectedAppointmentId());
       success = true;
     } catch (error) {
-      const message =
+      const details =
         error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to delete appointment';
+      const message = appointmentName
+        ? `Could not delete appointment "${appointmentName}". ${details}`
+        : details;
       setFormError(message);
       snackBarContext?.('error', message);
       success = false;
@@ -181,6 +204,10 @@ export default function AppointmentsPage() {
 
     try {
       const appointment = data?.find((appointment) => appointment.id === appointmentId);
+      const patientName =
+        appointment?.patientName ??
+        (appointment ? patientNameById.get(appointment.patientId) : undefined) ??
+        'patient';
 
       if (!appointment || ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status)) {
         throw new Error('Cannot send reminder for this appointment');
@@ -197,15 +224,21 @@ export default function AppointmentsPage() {
 
       if (response) {
         // show success snackbar
-        snackBarContext?.('success', 'Reminder created successfully');
+        snackBarContext?.('success', `Reminder sent to ${patientName}`);
         handleCloseSendReminderModal();
         void refetch();
       }
     } catch (error) {
-      const message =
+      const details =
         error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to create reminder';
+      const attemptedAppointment = data?.find((appointment) => appointment.id === appointmentId);
+      const patientName =
+        attemptedAppointment?.patientName ??
+        (attemptedAppointment ? patientNameById.get(attemptedAppointment.patientId) : undefined) ??
+        'patient';
+      const message = `Could not send reminder to ${patientName}. ${details}`;
       setFormError(message);
       snackBarContext?.('error', message);
     }
@@ -216,30 +249,44 @@ export default function AppointmentsPage() {
 
     try {
       const appointment = data?.find((row) => row.id === appointmentId);
+      const patientName =
+        appointment?.patientName ??
+        (appointment ? patientNameById.get(appointment.patientId) : undefined) ??
+        'patient';
 
       if (!appointment || ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status)) {
         throw new Error('Cannot send message for this appointment');
       }
 
       const senderName = sendAsLoggedInUser ? TEMP_LOGGED_IN_USER.name : appointment.userName;
+      const defaultDraft = `Hej ${messagePatientName ?? 'patient'},\n\n`;
       const payloadMessage =
-        (messageText.trim() || 'MESSAGE') + `\n\nMvh, ${senderName}\nDentis Team`;
+        (messageText.trim() || defaultDraft) + `\n\nMvh, ${senderName}\nDentis Team`;
+
+      console.log(payloadMessage);
 
       const response = await createMessage({
         appointmentId: appointment.id,
+        patientId: appointment.patientId,
         message: payloadMessage,
       }).unwrap();
 
       if (response) {
-        snackBarContext?.('success', 'Message sent successfully');
+        snackBarContext?.('success', `Message sent to ${patientName}`);
         handleCloseSendMessageModal();
         void refetch();
       }
     } catch (error) {
-      const message =
+      const details =
         error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to send message';
+      const attemptedAppointment = data?.find((row) => row.id === appointmentId);
+      const patientName =
+        attemptedAppointment?.patientName ??
+        (attemptedAppointment ? patientNameById.get(attemptedAppointment.patientId) : undefined) ??
+        'patient';
+      const message = `Could not send message to ${patientName}. ${details}`;
       setFormError(message);
       snackBarContext?.('error', message);
     }
@@ -253,9 +300,10 @@ export default function AppointmentsPage() {
 
     try {
       const appointment = data?.find((appointment) => appointment.id === appointmentId);
+      const appointmentName = appointment?.name ?? `#${appointmentId}`;
 
       if (!appointment || ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status)) {
-        throw new Error('Cannot delete this appointment');
+        throw new Error(`Cannot delete appointment "${appointmentName}"`);
       }
 
       const deleteDto = {
@@ -264,18 +312,22 @@ export default function AppointmentsPage() {
         message,
       };
 
-      const response = await handleSoftDeleteClick(deleteDto.appointmentId);
+      const response = await handleSoftDeleteClick(deleteDto.appointmentId, appointmentName);
 
       if (response) {
+        handleCloseDeleteModal();
         // show success snackbar
-        snackBarContext?.('success', 'Appointment deleted successfully');
+        snackBarContext?.('success', `Deleted appointment "${appointmentName}"`);
         void refetch();
       }
     } catch (error) {
-      const message =
+      const details =
         error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to delete appointment';
+      const attemptedAppointment = data?.find((appointment) => appointment.id === appointmentId);
+      const appointmentName = attemptedAppointment?.name ?? `#${appointmentId ?? 'unknown'}`;
+      const message = `Could not delete appointment "${appointmentName}". ${details}`;
       setFormError(message);
       snackBarContext?.('error', message);
     }
@@ -299,9 +351,11 @@ export default function AppointmentsPage() {
       appointMentDoctorName: null,
       isOpen: false,
     });
+    setMessagePatientName(null);
     setMessageText('');
     setSendAsLoggedInUser(false);
   }
+
   function handleCloseDeleteModal() {
     setIsDeleteModalOpen({
       ...isDeleteModalOpen,
@@ -406,7 +460,7 @@ export default function AppointmentsPage() {
             ) : null}
           </div>
 
-          {filteredAppointments.length === 0 ? (
+          {filteredAppointmentsForTable.length === 0 ? (
             <p className="rounded-xl border border-dashed border-(--line) bg-white/60 p-6 text-center text-sm text-(--muted)">
               No appointments found.
             </p>
@@ -446,12 +500,12 @@ export default function AppointmentsPage() {
               ) : (
                 <ObjectsTable
                   firstElementRef={ref}
-                  data={filteredAppointments}
+                  data={filteredAppointmentsForTable}
                   fieldTranslationsInOrder={{
                     id: 'ID',
                     name: 'Name',
-                    patientId: 'Patient ID',
-                    userName: 'Dentist Name',
+                    patientName: 'Patient',
+                    userName: 'Dentist',
                     date: 'Appointment Date',
                     createdAt: 'Created At',
                     updatedAt: 'Updated At',
@@ -492,14 +546,21 @@ export default function AppointmentsPage() {
                       // we need to get reminders for this apointment to be ablet o to know if we can send a reminder or not, but for now let's just disable the button if the appointment is not scheduled
                     },
                     {
-                      onAction: (appointment) =>
+                      onAction: (appointment) => {
+                        const patientName =
+                          appointment.patientName ??
+                          patientNameById.get(appointment.patientId) ??
+                          'patient';
+                        setMessagePatientName(patientName);
+                        setMessageText(`Hej ${patientName},\n\n`);
                         void setIsMessageModalOpen({
                           ...isMessageModalOpen,
                           appointmentId: appointment?.id,
                           appointMentDoctorName: appointment.userName,
                           isOpen: true,
                           isClosed: false,
-                        }),
+                        });
+                      },
                       actionLabel: 'Send Message',
                       isActionDisabled: (appointment) =>
                         isRowSoftDeleting(appointment.id) ||

@@ -18,6 +18,7 @@ export type CreateReminderRequest = {
 
 export type CreateMessageRequest = {
   appointmentId: number;
+  patientId: number;
   message: string;
 };
 
@@ -57,6 +58,7 @@ export type Appointment = {
   userId: number;
   userName: string;
   patientId: number;
+  patientName: string;
   date: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -102,6 +104,7 @@ export const APPOINTMENT_OBJ_MAP: Record<keyof Appointment, string> = {
   userId: 'User ID',
   userName: 'User Name',
   patientId: 'Patient ID',
+  patientName: 'Patient Name',
   date: 'Date',
   createdAt: 'Created At',
   updatedAt: 'Updated At',

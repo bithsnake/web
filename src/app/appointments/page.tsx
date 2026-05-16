@@ -21,6 +21,7 @@ import { ObjectsTable } from '../_components/objects-table';
 import { QuickCreatePanel } from '../_components/panels/quick-create-panel';
 import { BrandButton } from '../_components/buttons/brand-button';
 import { useCreateReminderMutation } from '@/lib/features/reminders-api';
+import { useCreateMessageMutation } from '@/lib/features/messages-api';
 import { useScrollToRef } from '../shared/hooks';
 import { CardModal } from '../_components/card-modal';
 import { CardModalFooter } from '../_components/card-modal-footer';
@@ -30,6 +31,8 @@ const TEMP_LOGGED_IN_USER = {
   id: 1,
   name: 'Dr. Smith',
 };
+
+const DEFAULT_REMINDER_MESSAGE = 'Hi! This is a reminder for your upcoming appointment.';
 
 export default function AppointmentsPage() {
   const snackBarContext = useContext(SnackBarContext);
@@ -41,8 +44,8 @@ export default function AppointmentsPage() {
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [reminderMessage, setReminderMessage] = useState<string>(''); // New state for reminder message
-  const [sendAsLoggedInUser, setSendAsLoggedInUser] = useState<boolean>(false); // Checkbox state
+  const [messageText, setMessageText] = useState<string>('');
+  const [sendAsLoggedInUser, setSendAsLoggedInUser] = useState<boolean>(false);
 
   const dispatch = useAppDispatch();
 
@@ -50,6 +53,12 @@ export default function AppointmentsPage() {
   const [softDeleteAppointment] = useSoftDeleteAppointmentMutation();
   const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<number | null>(null);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState<{
+    appointmentId: number | null;
+    appointMentDoctorName: string | null;
+    isOpen: boolean;
+    isClosed: boolean;
+  }>({ appointmentId: null, appointMentDoctorName: null, isOpen: false, isClosed: true });
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState<{
     appointmentId: number | null;
     appointMentDoctorName: string | null;
     isOpen: boolean;
@@ -64,6 +73,7 @@ export default function AppointmentsPage() {
   const [ref] = useScrollToRef<HTMLTableRowElement>();
 
   const sendReminderModalRef = useRef<HTMLDivElement>(null);
+  const sendMessageModalRef = useRef<HTMLDivElement>(null);
   const deleteModalRef = useRef<HTMLDivElement>(null);
 
   // search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
@@ -88,6 +98,7 @@ export default function AppointmentsPage() {
       // isSuccess: isCreatingReminderSuccess,
     },
   ] = useCreateReminderMutation();
+  const [createMessage] = useCreateMessageMutation();
 
   const filteredAppointments = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -164,7 +175,7 @@ export default function AppointmentsPage() {
     return success;
   }
 
-  async function handleSendReminder(appointmentId: number | null, message: string = 'MESSAGE') {
+  async function handleSendReminder(appointmentId: number | null) {
     if (appointmentId === null) return;
     console.log(sendReminderModalRef);
 
@@ -175,15 +186,11 @@ export default function AppointmentsPage() {
         throw new Error('Cannot send reminder for this appointment');
       }
 
-      const signature = `\n\nMvh, ${sendAsLoggedInUser ? TEMP_LOGGED_IN_USER.name : appointment.userId}\nDentis Team`; // Use logged-in user name if checkbox is checked
-
-      message = reminderMessage || message; // use the state value if available
-      message += signature; // append the signature to the message
+      const signature = `\n\nMvh, ${appointment.userName}\nDentis Team`;
 
       const reminderDto = {
         appointmentId: appointment.id,
-        patientId: appointment.patientId,
-        message,
+        message: `${DEFAULT_REMINDER_MESSAGE}${signature}`,
       };
 
       const response = await createReminder(reminderDto).unwrap();
@@ -199,6 +206,40 @@ export default function AppointmentsPage() {
         error && typeof error === 'object' && 'data' in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : 'Failed to create reminder';
+      setFormError(message);
+      snackBarContext?.('error', message);
+    }
+  }
+
+  async function handleSendMessage(appointmentId: number | null) {
+    if (appointmentId === null) return;
+
+    try {
+      const appointment = data?.find((row) => row.id === appointmentId);
+
+      if (!appointment || ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status)) {
+        throw new Error('Cannot send message for this appointment');
+      }
+
+      const senderName = sendAsLoggedInUser ? TEMP_LOGGED_IN_USER.name : appointment.userName;
+      const payloadMessage =
+        (messageText.trim() || 'MESSAGE') + `\n\nMvh, ${senderName}\nDentis Team`;
+
+      const response = await createMessage({
+        appointmentId: appointment.id,
+        message: payloadMessage,
+      }).unwrap();
+
+      if (response) {
+        snackBarContext?.('success', 'Message sent successfully');
+        handleCloseSendMessageModal();
+        void refetch();
+      }
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'data' in error
+          ? JSON.stringify((error as unknown as { data: unknown }).data)
+          : 'Failed to send message';
       setFormError(message);
       snackBarContext?.('error', message);
     }
@@ -249,6 +290,17 @@ export default function AppointmentsPage() {
       appointMentDoctorName: null,
       isOpen: false,
     });
+  }
+
+  function handleCloseSendMessageModal() {
+    setIsMessageModalOpen({
+      ...isMessageModalOpen,
+      appointmentId: null,
+      appointMentDoctorName: null,
+      isOpen: false,
+    });
+    setMessageText('');
+    setSendAsLoggedInUser(false);
   }
   function handleCloseDeleteModal() {
     setIsDeleteModalOpen({
@@ -436,9 +488,22 @@ export default function AppointmentsPage() {
                       actionLabel: 'Send Reminder',
                       isActionDisabled: (appointment) =>
                         isRowSoftDeleting(appointment.id) ||
-                        void appointment.status === 'CANCELED' ||
-                        void appointment.status === 'COMPLETED',
+                        ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status),
                       // we need to get reminders for this apointment to be ablet o to know if we can send a reminder or not, but for now let's just disable the button if the appointment is not scheduled
+                    },
+                    {
+                      onAction: (appointment) =>
+                        void setIsMessageModalOpen({
+                          ...isMessageModalOpen,
+                          appointmentId: appointment?.id,
+                          appointMentDoctorName: appointment.userName,
+                          isOpen: true,
+                          isClosed: false,
+                        }),
+                      actionLabel: 'Send Message',
+                      isActionDisabled: (appointment) =>
+                        isRowSoftDeleting(appointment.id) ||
+                        ['CANCELED', 'COMPLETED', 'DELETED'].includes(appointment.status),
                     },
                   ]}
                 />
@@ -488,34 +553,9 @@ export default function AppointmentsPage() {
             onClose={() => handleCloseSendReminderModal()}
             title="Send Reminder"
           >
-            <div className="flex flex-col items-start gap-3">
-              <textarea
-                value={reminderMessage}
-                onChange={(e) => setReminderMessage(e.target.value)}
-                placeholder="Add reminder text"
-                cols={30}
-                rows={10}
-                className="w-full flex-1 rounded-md border border-(--line) bg-white px-3 py-2  shadow-sm outline-none focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
-              ></textarea>
-              <div className="mt-4 flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  id="sendAsLoggedInUser"
-                  checked={sendAsLoggedInUser}
-                  onChange={(e) => setSendAsLoggedInUser(e.target.checked)}
-                  className="h-4 w-4 rounded border border-(--line) bg-white cursor-pointer"
-                />
-                <label
-                  htmlFor="sendAsLoggedInUser"
-                  className="cursor-pointer text-sm text-(--muted)"
-                >
-                  Send as {TEMP_LOGGED_IN_USER.name} instead of appointment doctor
-                  {isReminderModalOpen.appointMentDoctorName
-                    ? ` (${isReminderModalOpen.appointMentDoctorName})`
-                    : ''}
-                </label>
-              </div>
-            </div>
+            <p className=" text-center align-middle  text-(--muted)">
+              Are you sure you want to send a reminder to this patient?
+            </p>
 
             <CardModalFooter>
               <BrandButton
@@ -531,6 +571,61 @@ export default function AppointmentsPage() {
                 className="px-3 py-1"
               >
                 Send Reminder
+              </BrandButton>
+            </CardModalFooter>
+          </CardModal>
+        )}
+        {isMessageModalOpen.isOpen && !isMessageModalOpen.isClosed && (
+          <CardModal
+            modalRef={sendMessageModalRef ?? null}
+            isOpen={isMessageModalOpen.isOpen}
+            modalState={setIsMessageModalOpen}
+            onClose={() => handleCloseSendMessageModal()}
+            title="Send Message"
+          >
+            <div className="flex flex-col items-start gap-3">
+              <textarea
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Write message to patient"
+                cols={30}
+                rows={10}
+                className=" w-full flex-1 rounded-md border border-(--line) bg-white px-3 py-2 shadow-sm outline-none focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
+              ></textarea>
+              <div className="mt-4 flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="sendAsLoggedInUser"
+                  checked={sendAsLoggedInUser}
+                  onChange={(e) => setSendAsLoggedInUser(e.target.checked)}
+                  className="h-4 w-4 rounded border border-(--line) bg-white cursor-pointer"
+                />
+                <label
+                  htmlFor="sendAsLoggedInUser"
+                  className="cursor-pointer text-sm text-(--muted)"
+                >
+                  Send as {TEMP_LOGGED_IN_USER.name} instead of appointment doctor
+                  {isMessageModalOpen.appointMentDoctorName
+                    ? ` (${isMessageModalOpen.appointMentDoctorName})`
+                    : ''}
+                </label>
+              </div>
+            </div>
+
+            <CardModalFooter>
+              <BrandButton
+                onClick={() => handleCloseSendMessageModal()}
+                variant="alternate"
+                className="px-3 py-1"
+              >
+                Cancel
+              </BrandButton>
+              <BrandButton
+                onClick={() => handleSendMessage(isMessageModalOpen.appointmentId ?? null)}
+                variant="primary"
+                className="px-3 py-1"
+              >
+                Send Message
               </BrandButton>
             </CardModalFooter>
           </CardModal>

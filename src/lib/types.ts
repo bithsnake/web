@@ -13,7 +13,11 @@ export type CreatePatientRequest = {
 
 export type CreateReminderRequest = {
   appointmentId: number;
-  patientId: number;
+  message: string;
+};
+
+export type CreateMessageRequest = {
+  appointmentId: number;
   message: string;
 };
 

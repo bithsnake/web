@@ -16,6 +16,7 @@ export const CardModal = ({
   modalState: React.Dispatch<
     React.SetStateAction<{
       appointmentId: number | null;
+      appointMentDoctorName: string | null;
       isOpen: boolean;
       isClosed: boolean;
     }>
@@ -43,7 +44,13 @@ export const CardModal = ({
   const handleClose = () => {
     setSlide(false);
     const dismiss = setTimeout(() => {
-      modalState?.((prev) => ({ ...prev, isClosed: true }));
+      modalState?.((prev) => ({
+        ...prev,
+        isClosed: true,
+        appointMentDoctorName: null,
+        appointmentId: null,
+        isOpen: false,
+      }));
       onClose();
       clearTimeout(dismiss);
     }, 300);

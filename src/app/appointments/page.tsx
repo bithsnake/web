@@ -16,7 +16,7 @@ import {
 } from '@/lib/features/appointments-ui-slice';
 import { ObjectDetailsTable } from '../_components/object-details-table';
 import { CreateAppointmentForm } from '../_components/forms/create-appointment-form';
-import { useState, useMemo, useEffect, useRef, use, useContext } from 'react';
+import { useState, useMemo, useEffect, useRef, useContext } from 'react';
 import { ObjectsTable } from '../_components/objects-table';
 import { QuickCreatePanel } from '../_components/panels/quick-create-panel';
 import { BrandButton } from '../_components/buttons/brand-button';
@@ -42,6 +42,7 @@ export default function AppointmentsPage() {
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [reminderMessage, setReminderMessage] = useState<string>(''); // New state for reminder message
+  const [sendAsLoggedInUser, setSendAsLoggedInUser] = useState<boolean>(false); // Checkbox state
 
   const dispatch = useAppDispatch();
 
@@ -50,15 +51,17 @@ export default function AppointmentsPage() {
   const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<number | null>(null);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState<{
     appointmentId: number | null;
+    appointMentDoctorName: string | null;
     isOpen: boolean;
     isClosed: boolean;
-  }>({ appointmentId: null, isOpen: false, isClosed: true });
+  }>({ appointmentId: null, appointMentDoctorName: null, isOpen: false, isClosed: true });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<{
     appointmentId: number | null;
+    appointMentDoctorName: string | null;
     isOpen: boolean;
     isClosed: boolean;
-  }>({ appointmentId: null, isOpen: false, isClosed: true });
-  const [ref, scrollTo] = useScrollToRef<HTMLTableRowElement>();
+  }>({ appointmentId: null, appointMentDoctorName: null, isOpen: false, isClosed: true });
+  const [ref] = useScrollToRef<HTMLTableRowElement>();
 
   const sendReminderModalRef = useRef<HTMLDivElement>(null);
   const deleteModalRef = useRef<HTMLDivElement>(null);
@@ -172,7 +175,7 @@ export default function AppointmentsPage() {
         throw new Error('Cannot send reminder for this appointment');
       }
 
-      const signature = `\n\nMvh, ${appointment.userId}\nDentis Team`; // Example signature
+      const signature = `\n\nMvh, ${sendAsLoggedInUser ? TEMP_LOGGED_IN_USER.name : appointment.userId}\nDentis Team`; // Use logged-in user name if checkbox is checked
 
       message = reminderMessage || message; // use the state value if available
       message += signature; // append the signature to the message
@@ -188,6 +191,7 @@ export default function AppointmentsPage() {
       if (response) {
         // show success snackbar
         snackBarContext?.('success', 'Reminder created successfully');
+        handleCloseSendReminderModal();
         void refetch();
       }
     } catch (error) {
@@ -242,6 +246,7 @@ export default function AppointmentsPage() {
     setIsReminderModalOpen({
       ...isReminderModalOpen,
       appointmentId: null,
+      appointMentDoctorName: null,
       isOpen: false,
     });
   }
@@ -424,6 +429,7 @@ export default function AppointmentsPage() {
                         void setIsReminderModalOpen({
                           ...isReminderModalOpen,
                           appointmentId: appointment?.id,
+                          appointMentDoctorName: appointment.userName,
                           isOpen: true,
                           isClosed: false,
                         }),
@@ -482,16 +488,34 @@ export default function AppointmentsPage() {
             onClose={() => handleCloseSendReminderModal()}
             title="Send Reminder"
           >
-            <textarea
-              value={reminderMessage}
-              onChange={(e) => setReminderMessage(e.target.value)}
-              placeholder="Add reminder text"
-              name=""
-              id=""
-              cols={30}
-              rows={10}
-              className="w-full rounded-md border border-(--line) bg-white px-3 py-2 text-xl shadow-sm outline-none focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
-            ></textarea>
+            <div className="flex flex-col items-start gap-3">
+              <textarea
+                value={reminderMessage}
+                onChange={(e) => setReminderMessage(e.target.value)}
+                placeholder="Add reminder text"
+                cols={30}
+                rows={10}
+                className="w-full flex-1 rounded-md border border-(--line) bg-white px-3 py-2  shadow-sm outline-none focus:border-(--brand) focus:ring-2 focus:ring-(--brand)/20"
+              ></textarea>
+              <div className="mt-4 flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="sendAsLoggedInUser"
+                  checked={sendAsLoggedInUser}
+                  onChange={(e) => setSendAsLoggedInUser(e.target.checked)}
+                  className="h-4 w-4 rounded border border-(--line) bg-white cursor-pointer"
+                />
+                <label
+                  htmlFor="sendAsLoggedInUser"
+                  className="cursor-pointer text-sm text-(--muted)"
+                >
+                  Send as {TEMP_LOGGED_IN_USER.name} instead of appointment doctor
+                  {isReminderModalOpen.appointMentDoctorName
+                    ? ` (${isReminderModalOpen.appointMentDoctorName})`
+                    : ''}
+                </label>
+              </div>
+            </div>
 
             <CardModalFooter>
               <BrandButton

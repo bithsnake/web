@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { AppShell } from "../_components/shells/app-shell";
 
 import { ObjectDetailsTable } from "../_components/object-details-table";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useContext, useRef } from "react";
 import { Billing, BILLING_OBJ_MAP } from "@/lib/types";
 import {
   useGetBillingByIdQuery,
@@ -23,8 +23,12 @@ import { BILLING_STATUS } from "@/lib/types";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/panels/quick-create-panel";
 import { BrandButton } from "../_components/buttons/brand-button";
+import SnackBarContext from "../contexts/snackbar-context";
+import { CardModal } from "../_components/card-modal";
+import { CardModalFooter } from "../_components/card-modal-footer";
 
 export default function BillingsPage() {
+  const snackBarContext = useContext(SnackBarContext);
   const billingObjMap: Record<keyof Billing, string> = Object.entries(
     BILLING_OBJ_MAP,
   ).reduce(
@@ -43,6 +47,13 @@ export default function BillingsPage() {
   const [currentlySoftDeletingId, setCurrentlySoftDeletingId] = useState<
     number | null
   >(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<{
+    appointmentId: number | null;
+    appointMentDoctorName: string | null;
+    isOpen: boolean;
+    isClosed: boolean;
+  }>({ appointmentId: null, appointMentDoctorName: null, isOpen: false, isClosed: true });
+  const deleteModalRef = useRef<HTMLDivElement>(null);
 
   // search = useAppSelector((state) => state.appointmentsUi.search); // subscribe to value
   const search = useAppSelector((state) => state.billingsUi.search); // subscribe to value
@@ -106,29 +117,45 @@ export default function BillingsPage() {
     return currentlySoftDeletingId === billingId;
   }
 
-  async function handleSoftDeleteClick(billingId: number) {
-    const confirmed = window.confirm(
-      "Delete this billing? This action cannot be undone.",
-    );
-    if (!confirmed) return;
+  async function handleSoftDeleteClick(billingId: number | null) {
+    if (billingId === null) return;
     setFormError(null);
+
+    const billing = data?.find((item) => item.id === billingId);
+    const billingName = billing?.description?.trim()
+      ? billing.description
+      : `Billing #${billingId}`;
 
     try {
       setCurrentlySoftDeletingId(billingId);
       await softDeleteBilling(billingId).unwrap();
 
+      snackBarContext?.("success", `Deleted ${billingName}`);
+      handleCloseDeleteModal();
+
       if (selectedBillingId === billingId) {
         dispatch(clearSelectedBillingId());
       }
     } catch (error) {
-      const message =
+      const details =
         error && typeof error === "object" && "data" in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : "Failed to delete billing. Please try again.";
+      const message = `Could not delete ${billingName}. ${details}`;
       setFormError(message);
+      snackBarContext?.("error", message);
     } finally {
       setCurrentlySoftDeletingId(null);
     }
+  }
+
+  function handleCloseDeleteModal() {
+    setIsDeleteModalOpen({
+      ...isDeleteModalOpen,
+      appointmentId: null,
+      appointMentDoctorName: null,
+      isOpen: false,
+    });
   }
 
   if (isLoading) {
@@ -294,7 +321,7 @@ export default function BillingsPage() {
               ) : (
                 <ObjectsTable
                   data={filteredBillings}
-                  fieldTranslations={{
+                  fieldTranslationsInOrder={{
                     id: "ID",
                     appointmentId: "Appointment ID",
                     description: "Description",
@@ -309,7 +336,15 @@ export default function BillingsPage() {
                   onActions={[
                     {
                       onAction: (billing: Billing) =>
-                        void handleSoftDeleteClick(billing.id),
+                        void setIsDeleteModalOpen({
+                          ...isDeleteModalOpen,
+                          appointmentId: billing.id,
+                          appointMentDoctorName: billing?.description?.trim()
+                            ? billing.description
+                            : `Billing #${billing.id}`,
+                          isOpen: true,
+                          isClosed: false,
+                        }),
                       actionLabel: (billing: Billing) =>
                         isRowSoftDeleting(billing.id)
                           ? "Deleting..."
@@ -324,6 +359,36 @@ export default function BillingsPage() {
           )}
         </section>
       </div>
+      {isDeleteModalOpen.isOpen && !isDeleteModalOpen.isClosed && (
+        <CardModal
+          modalRef={deleteModalRef ?? null}
+          isOpen={isDeleteModalOpen.isOpen}
+          modalState={setIsDeleteModalOpen}
+          onClose={() => handleCloseDeleteModal()}
+          title="Delete Billing"
+        >
+          <p className="mb-4 text-sm text-(--muted)">
+            Are you sure you want to delete {isDeleteModalOpen.appointMentDoctorName ?? "this billing"}?
+          </p>
+
+          <CardModalFooter>
+            <BrandButton
+              onClick={() => handleCloseDeleteModal()}
+              variant="alternate"
+              className="px-3 py-1"
+            >
+              Cancel
+            </BrandButton>
+            <BrandButton
+              onClick={() => handleSoftDeleteClick(isDeleteModalOpen.appointmentId)}
+              variant="primary"
+              className="px-3 py-1"
+            >
+              Delete
+            </BrandButton>
+          </CardModalFooter>
+        </CardModal>
+      )}
     </AppShell>
   );
 }

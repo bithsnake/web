@@ -9,7 +9,7 @@ import {
 } from "@/lib/features/patients-ui-slice";
 import { AppShell } from "../_components/shells/app-shell";
 import { Patient } from "../../lib/types";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import { CreatePatientForm } from "../_components/forms/create-patient-form";
 import {
   useGetPatientsQuery,
@@ -20,8 +20,12 @@ import { ObjectDetailsTable } from "../_components/object-details-table";
 import { ObjectsTable } from "../_components/objects-table";
 import { QuickCreatePanel } from "../_components/panels/quick-create-panel";
 import { BrandButton } from "../_components/buttons/brand-button";
+import SnackBarContext from "../contexts/snackbar-context";
+import { CardModal } from "../_components/card-modal";
+import { CardModalFooter } from "../_components/card-modal-footer";
 
 export default function PatientsPage() {
+  const snackBarContext = useContext(SnackBarContext);
   const [formError, setFormError] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
@@ -31,6 +35,13 @@ export default function PatientsPage() {
   const [currentlyDeletingId, setCurrentlyDeletingId] = useState<number | null>(
     null,
   );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<{
+    appointmentId: number | null;
+    appointMentDoctorName: string | null;
+    isOpen: boolean;
+    isClosed: boolean;
+  }>({ appointmentId: null, appointMentDoctorName: null, isOpen: false, isClosed: true });
+  const deleteModalRef = useRef<HTMLDivElement>(null);
 
   // search = useAppSelector((state) => state.patientsUi.search); // subscribe to value
   const search = useAppSelector((state) => state.patientsUi.search); // subscribe to value
@@ -80,29 +91,43 @@ export default function PatientsPage() {
     return currentlyDeletingId === patientId;
   }
 
-  async function handleDeleteClick(patientId: number) {
-    const confirmed = window.confirm(
-      "Delete this patient? This action cannot be undone.",
-    );
-    if (!confirmed) return;
+  async function handleDeleteClick(patientId: number | null) {
+    if (patientId === null) return;
     setFormError(null);
+
+    const patient = data?.find((item) => item.id === patientId);
+    const patientName = patient?.name ?? `Patient #${patientId}`;
 
     try {
       setCurrentlyDeletingId(patientId);
       await deletePatient(patientId).unwrap();
 
+      snackBarContext?.("success", `Deleted patient ${patientName}`);
+      handleCloseDeleteModal();
+
       if (selectedPatientId === patientId) {
         dispatch(clearSelectedPatientId());
       }
     } catch (error) {
-      const message =
+      const details =
         error && typeof error === "object" && "data" in error
           ? JSON.stringify((error as unknown as { data: unknown }).data)
           : "Failed to delete patient";
+      const message = `Could not delete patient ${patientName}. ${details}`;
       setFormError(message);
+      snackBarContext?.("error", message);
     } finally {
       setCurrentlyDeletingId(null);
     }
+  }
+
+  function handleCloseDeleteModal() {
+    setIsDeleteModalOpen({
+      ...isDeleteModalOpen,
+      appointmentId: null,
+      appointMentDoctorName: null,
+      isOpen: false,
+    });
   }
 
   if (isLoading) {
@@ -257,7 +282,7 @@ export default function PatientsPage() {
               ) : (
                 <ObjectsTable
                   data={filteredPatients}
-                  fieldTranslations={{
+                  fieldTranslationsInOrder={{
                     id: "ID",
                     name: "Name",
                     email: "Email",
@@ -269,7 +294,14 @@ export default function PatientsPage() {
                   }
                   onActions={[
                     {
-                      onAction: (patient) => void handleDeleteClick(patient.id),
+                      onAction: (patient) =>
+                        void setIsDeleteModalOpen({
+                          ...isDeleteModalOpen,
+                          appointmentId: patient.id,
+                          appointMentDoctorName: patient.name,
+                          isOpen: true,
+                          isClosed: false,
+                        }),
                       actionLabel: (patient) =>
                         isRowDeleting(patient.id) ? "Deleting..." : "Delete",
                       isActionDisabled: (patient) => isRowDeleting(patient.id),
@@ -281,6 +313,36 @@ export default function PatientsPage() {
           )}
         </section>
       </div>
+      {isDeleteModalOpen.isOpen && !isDeleteModalOpen.isClosed && (
+        <CardModal
+          modalRef={deleteModalRef ?? null}
+          isOpen={isDeleteModalOpen.isOpen}
+          modalState={setIsDeleteModalOpen}
+          onClose={() => handleCloseDeleteModal()}
+          title="Delete Patient"
+        >
+          <p className="mb-4 text-sm text-(--muted)">
+            Are you sure you want to delete {isDeleteModalOpen.appointMentDoctorName ?? "this patient"}?
+          </p>
+
+          <CardModalFooter>
+            <BrandButton
+              onClick={() => handleCloseDeleteModal()}
+              variant="alternate"
+              className="px-3 py-1"
+            >
+              Cancel
+            </BrandButton>
+            <BrandButton
+              onClick={() => handleDeleteClick(isDeleteModalOpen.appointmentId)}
+              variant="primary"
+              className="px-3 py-1"
+            >
+              Delete
+            </BrandButton>
+          </CardModalFooter>
+        </CardModal>
+      )}
     </AppShell>
   );
 }

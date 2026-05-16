@@ -101,6 +101,7 @@ export const APPOINTMENT_OBJ_MAP: Record<keyof Appointment, string> = {
   date: 'Date',
   createdAt: 'Created At',
   updatedAt: 'Updated At',
+  lastRemindedAt: '',
 };
 
 export const APPOINTMENT_TYPE_OBJ_MAP: Record<AppointmentType, string> = {
